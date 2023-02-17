@@ -8,6 +8,8 @@
 /storage/*.key
 /vendor
 kpmg-meeting-api.zip
+app.zip
+vendor.zip
 .env
 .env.backup
 .phpunit.result.cache
