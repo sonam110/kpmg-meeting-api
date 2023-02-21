@@ -5,8 +5,8 @@
 <body>
 <p>Hi {{ @$content['name'] }},</p>
 <p><strong>{{ @$content['meeting_title'] }}</strong></p>
-<p><strong>Date: </strong>{{ @$content['metting_date'] }}</p>
-<p><strong>Time: </strong>{{ date('H:i A', strtotime(@$content['metting_time'])) }}</p>
+<p><strong>Date: </strong>{{ @$content['meeting_date'] }}</p>
+<p><strong>Time: </strong>{{ date('H:i A', strtotime(@$content['meeting_time'])) }}</p>
 <p><strong>Agenda: </strong> </p>
 <p>{{ @$content['agenda_of_meeting'] }}</p>
 

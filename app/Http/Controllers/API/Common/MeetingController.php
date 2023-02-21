@@ -40,9 +40,9 @@ class MeetingController extends Controller
             $user = getUser();
             if($user->role_id == 2){
                 $attendee = Attendee::where('user_id',$user->id)->pluck('meeting_id')->toArray();
-                $query = Meeting::where('id',$attendee)->orderby('id','DESC')->with('Attendees','Douments');
+                $query = Meeting::where('id',$attendee)->orderby('id','DESC')->with('Attendees','documents');
             } else{
-                $query = Meeting::orderby('id','DESC')->with('Attendees','Douments');
+                $query = Meeting::orderby('id','DESC')->with('Attendees','documents');
             }
         
             if(!empty($request->meeting_title))
@@ -55,15 +55,15 @@ class MeetingController extends Controller
             }
             if(!empty($request->start_date) && !empty($request->end_date))
             {
-                $query->whereDate('metting_date', '>=', $request->start_date)->whereDate('metting_date', '<=', $request->end_date);
+                $query->whereDate('meeting_date', '>=', $request->start_date)->whereDate('meeting_date', '<=', $request->end_date);
             }
             elseif(!empty($request->start_date) && empty($request->end_date))
             {
-                $query->whereDate('metting_date', ">=" ,$request->start_date);
+                $query->whereDate('meeting_date', ">=" ,$request->start_date);
             }
             elseif(empty($request->start_date) && !empty($request->end_date))
             {
-                $query->whereDate('metting_date', '<=', $request->end_date);
+                $query->whereDate('meeting_date', '<=', $request->end_date);
             }
 
 
@@ -115,8 +115,8 @@ class MeetingController extends Controller
     {
         $validation = \Validator::make($request->all(), [
             'meeting_title'      => 'required',
-            'metting_date'   => 'required',
-            'metting_time'   => 'required',
+            'meeting_date'   => 'required',
+            'meeting_time'   => 'required',
             "attendees"    => "required|array|min:1",
             "attendees.*"  => "required|distinct|min:1",
             'attendees.*.email' => 'required|email'
@@ -134,11 +134,10 @@ class MeetingController extends Controller
             $meeting->meeting_title = $request->meeting_title;
             $meeting->meeting_ref_no = $request->meeting_ref_no;
             $meeting->agenda_of_meeting  = $request->agenda_of_meeting;
-            $meeting->metting_date = $request->metting_date;
-            $meeting->metting_time = $request->metting_time;
+            $meeting->meeting_date = $request->meeting_date;
+            $meeting->meeting_time = $request->meeting_time;
             $meeting->is_repeat = ($request->is_repeat== true) ? 1:0;
             $meeting->save();
-
             /*------------Attendees---------------------*/
             if(is_array(@$request->attendees) && count(@$request->attendees) >0 ){
                 foreach ($request->attendees as $key => $attendee) {
@@ -157,21 +156,24 @@ class MeetingController extends Controller
                     $attende->meeting_id = $meeting->id;
                     $attende->user_id = $user_id;
                     $attende->save();
+                    
 
                     if (env('IS_MAIL_ENABLE', false) == true) {
                         $content = [
                             "name" =>$name,
                             "meeting_title" => $request->meeting_title,
-                            "metting_date" => $request->metting_date,
-                            "metting_time" => $request->metting_time,
+                            "meeting_date" => $request->meeting_date,
+                            "meeting_time" => $request->meeting_time,
                             "agenda_of_meeting" => $request->agenda_of_meeting,
                    
                         ];
                        
                         $recevier = Mail::to($attendee['email'])->send(new MeetingMail($content));
                     }
+
                 }
             }
+
             
             /*------------Documents---------------------*/
             if(is_array(@$request->documents) && count(@$request->documents) >0 ){
@@ -179,6 +181,9 @@ class MeetingController extends Controller
                     $doument = new MeetingDocument;
                     $doument->meeting_id = $meeting->id;
                     $doument->document = $document['file'];
+                    $doument->file_extension = $document['file_extension'];
+                    $doument->file_name = $document['file_name'];
+                    $doument->uploading_file_name = $document['uploading_file_name'];
                     $doument->save();
                 }
 
@@ -265,7 +270,7 @@ class MeetingController extends Controller
     {
         try {
             $meeting = Meeting::select('*')
-                ->with('Attendees','Douments')
+                ->with('Attendees','documents')
                 ->find($id);
             if($meeting)
             {
@@ -300,8 +305,8 @@ class MeetingController extends Controller
     {
         $validation = \Validator::make($request->all(), [
             'meeting_title'      => 'required',
-            'metting_date'   => 'required',
-            'metting_time'   => 'required',
+            'meeting_date'   => 'required',
+            'meeting_time'   => 'required',
             "attendees"    => "required|array|min:1",
             "attendees.*"  => "required|distinct|min:1",
         ]);
@@ -320,8 +325,8 @@ class MeetingController extends Controller
             $meeting->meeting_title = $request->meeting_title;
             $meeting->meeting_ref_no = $request->meeting_ref_no;
             $meeting->agenda_of_meeting  = $request->agenda_of_meeting;
-            $meeting->metting_date = $request->metting_date;
-            $meeting->metting_time = $request->metting_time;
+            $meeting->meeting_date = $request->meeting_date;
+            $meeting->meeting_time = $request->meeting_time;
             $meeting->is_repeat = ($request->is_repeat== true) ? 1:0;
             $meeting->save();
             /*------------Attendees---------------------*/
@@ -349,6 +354,9 @@ class MeetingController extends Controller
                     $doument = new MeetingDocument;
                     $doument->meeting_id = $meeting->id;
                     $doument->document = $document['file'];
+                    $doument->file_extension = $document['file_extension'];
+                    $doument->file_name = $document['file_name'];
+                    $doument->uploading_file_name = $document['uploading_file_name'];
                     $doument->save();
                 }
 

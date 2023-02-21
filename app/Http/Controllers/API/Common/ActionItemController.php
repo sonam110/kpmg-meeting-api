@@ -24,6 +24,7 @@ class ActionItemController extends Controller
     public function actionItems(Request $request)
     {
         try {
+            $user = getUser();
 
             if($user->role_id == 1){
                 $query = ActionItem::where('owner_id',$user->id)->orderby('id','DESC')->with('meeting');

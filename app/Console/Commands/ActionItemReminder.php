@@ -32,19 +32,19 @@ class ActionItemReminder extends Command
     public function handle()
     {
        $currentNow = Carbon::now()->format("Y-m-d");
-       $allactionItems = ActionItem::whereDate('meetings.metting_date',$currentNow)->orderby('meetings.id','ASC')->with('user:id,name,email')->get();
+       $allactionItems = ActionItem::whereDate('meetings.meeting_date',$currentNow)->orderby('meetings.id','ASC')->with('user:id,name,email')->get();
 
         echo Carbon::now()->format('Y-m-d H:i:s') . '------Reminder  Start------';
         foreach ($getAllmeetingAttendees as $key => $meeting) {
-            $meeting_time = Carbon::createFromFormat('H:i:s',$meeting->metting_time);
+            $meeting_time = Carbon::createFromFormat('H:i:s',$meeting->meeting_time);
             $current_time =  Carbon::createFromFormat('H:i:s',date('H:i:s'));
             $diff_in_minutes = $meeting_time->diffInMinutes($current_time);
             if($diff_in_minutes=='15'){
                 $content = [
                 "name" => @$meeting->user->name,
                 "meeting_title" => @$meeting->meeting_title,
-                "metting_date" => @$meeting->metting_date,
-                "metting_time" => @$meeting->metting_time,
+                "meeting_date" => @$meeting->meeting_date,
+                "meeting_time" => @$meeting->meeting_time,
                 "agenda_of_meeting" => @$meeting->agenda_of_meeting,
                
                 ];

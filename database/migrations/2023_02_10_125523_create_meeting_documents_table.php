@@ -18,6 +18,9 @@ return new class extends Migration
             $table->unsignedBigInteger('meeting_id');
             $table->foreign('meeting_id')->references('id')->on('meetings')->onDelete('cascade');
             $table->string('document');
+            $table->string('file_extension')->nullable();
+            $table->string('file_name')->nullable();
+            $table->string('uploading_file_name')->nullable();
             $table->timestamps();
             
         });

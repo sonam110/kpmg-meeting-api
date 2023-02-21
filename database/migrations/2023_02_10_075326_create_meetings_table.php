@@ -19,8 +19,8 @@ return new class extends Migration
             $table->string('meeting_title');
             $table->string('meeting_ref_no')->nullable();
             $table->text('agenda_of_meeting')->nullable();
-            $table->date('metting_date');
-            $table->time('metting_time');
+            $table->date('meeting_date');
+            $table->time('meeting_time');
             $table->tinyInteger('is_repeat')->default(0)->comment('0=No,1=Yes');
             $table->timestamps();
             $table->softDeletes();

@@ -23,7 +23,7 @@ class NotesController extends Controller
     public function notes(Request $request)
     {
         try {
-            $query = MeetingNote::orderby('id','DESC')->with('meeting','Douments');
+            $query = MeetingNote::orderby('id','DESC')->with('meeting','documents');
             
             if(!empty($request->meeting_id))
             {
@@ -115,7 +115,7 @@ class NotesController extends Controller
     {
          try {
             $meetingNote = MeetingNote::select('*')
-                ->with('meeting','Douments')
+                ->with('meeting','documents')
                 ->find($id);
             if($meetingNote)
             {

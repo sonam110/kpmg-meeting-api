@@ -14,7 +14,7 @@ class Meeting extends Model
     {
          return $this->hasMany(Attendee::class, 'meeting_id', 'id');
     }
-    public function Douments()
+    public function documents()
     {
          return $this->hasMany(MeetingDocument::class, 'meeting_id', 'id');
     }

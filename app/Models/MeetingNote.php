@@ -14,7 +14,7 @@ class MeetingNote extends Model
     {
         return $this->belongsTo(Meeting::class, 'meeting_id', 'id');
     }
-    public function Douments()
+    public function documents()
     {
         return $this->hasMany(MeetingDocument::class, 'meeting_id', 'meeting_id');
     }
