@@ -23,7 +23,7 @@ class NotesController extends Controller
     public function notes(Request $request)
     {
         try {
-            $query = MeetingNote::orderby('id','DESC')->with('meeting','documents');
+            $query = MeetingNote::orderby('id','DESC')->with('meeting','documents','createdBy:id,name,email','editedBy:id,name,email','actionItems');
             
             if(!empty($request->meeting_id))
             {
@@ -115,7 +115,7 @@ class NotesController extends Controller
     {
          try {
             $meetingNote = MeetingNote::select('*')
-                ->with('meeting','documents')
+                ->with('meeting','documents','createdBy:id,name,email','editedBy:id,name,email','actionItems')
                 ->find($id);
             if($meetingNote)
             {
@@ -200,6 +200,45 @@ class NotesController extends Controller
             $isDeleted = $meetingNote->delete();
             return response()->json(prepareResult(false, [], trans('translate.deleted')), config('httpcodes.success'));
         } catch (\Throwable $e) {
+            \Log::error($e);
+            return response()->json(prepareResult(true, $e->getMessage(), trans('translate.something_went_wrong')), config('httpcodes.internal_server_error'));
+        }
+    }
+
+    public function action(Request $request)
+    {
+        $validation = \Validator::make($request->all(), [
+            'ids'      => 'required',
+            'action'      => 'required',
+        ]);
+
+        if ($validation->fails()) {
+            return response(prepareResult(true, $validation->messages(), trans('translate.validation_failed')), config('httpcodes.bad_request'));
+        }
+        DB::beginTransaction();
+        try 
+        {
+            $ids = $request->ids;
+            if($request->action == 'delete')
+            {
+                $meetingNotes = MeetingNote::whereIn('id',$ids)->delete();
+                $message = trans('translate.deleted');
+            }
+            elseif($request->action == 'inactive')
+            {
+                MeetingNote::whereIn('id',$ids)->update(['status'=>"2"]);
+                $message = trans('translate.inactive');
+            }
+            elseif($request->action == 'active')
+            {
+                MeetingNote::whereIn('id',$ids)->update(['status'=>"1"]);
+                $message = trans('translate.active');
+            }
+            $meetingNotes = MeetingNote::whereIn('id',$ids)->get();
+            DB::commit();
+            return response()->json(prepareResult(false, $meetingNotes, $message), config('httpcodes.success'));
+        }
+        catch (\Throwable $e) {
             \Log::error($e);
             return response()->json(prepareResult(true, $e->getMessage(), trans('translate.something_went_wrong')), config('httpcodes.internal_server_error'));
         }

@@ -21,6 +21,7 @@ return new class extends Migration
             $table->text('agenda_of_meeting')->nullable();
             $table->date('meeting_date');
             $table->time('meeting_time');
+            $table->boolean('status')->default('1')->comment('1:Active,2:Inactive');
             $table->tinyInteger('is_repeat')->default(0)->comment('0=No,1=Yes');
             $table->timestamps();
             $table->softDeletes();

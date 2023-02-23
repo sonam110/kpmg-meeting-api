@@ -22,6 +22,7 @@ return new class extends Migration
             $table->text('decision')->nullable();
             $table->unsignedBigInteger('created_by')->nullable();
             $table->unsignedBigInteger('edited_by')->nullable();
+            $table->boolean('status')->default('1')->comment('1:Active,2:Inactive');
             $table->timestamp('edited_date');
             $table->timestamps();
         });

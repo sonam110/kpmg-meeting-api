@@ -218,4 +218,53 @@ class ActionItemController extends Controller
     {
         //
     }
+
+    public function action(Request $request)
+    {
+        $validation = \Validator::make($request->all(), [
+            'ids'      => 'required',
+            'action'      => 'required',
+        ]);
+
+        if ($validation->fails()) {
+            return response(prepareResult(true, $validation->messages(), trans('translate.validation_failed')), config('httpcodes.bad_request'));
+        }
+        DB::beginTransaction();
+        try 
+        {
+            $ids = $request->ids;
+            if($request->action == 'in-process')
+            {
+                ActionItem::whereIn('id',$ids)->update(['status'=>"1"]);
+                $message = trans('translate.in_process');
+            }
+            elseif($request->action == 'completed')
+            {
+                ActionItem::whereIn('id',$ids)->update(['status'=>"2"]);
+                $message = trans('translate.completed');
+            }
+            elseif($request->action == 'on-hold')
+            {
+                ActionItem::whereIn('id',$ids)->update(['status'=>"3"]);
+                $message = trans('translate.on_hold');
+            }
+            elseif($request->action == 'cancelled')
+            {
+                ActionItem::whereIn('id',$ids)->update(['status'=>"4"]);
+                $message = trans('translate.cancelled');
+            }
+            elseif($request->action == 'pending')
+            {
+                ActionItem::whereIn('id',$ids)->update(['status'=>"0"]);
+                $message = trans('translate.pending');
+            }
+            $actionItems = ActionItem::whereIn('id',$ids)->get();
+            DB::commit();
+            return response()->json(prepareResult(false, $actionItems, $message), config('httpcodes.success'));
+        }
+        catch (\Throwable $e) {
+            \Log::error($e);
+            return response()->json(prepareResult(true, $e->getMessage(), trans('translate.something_went_wrong')), config('httpcodes.internal_server_error'));
+        }
+    }
 }

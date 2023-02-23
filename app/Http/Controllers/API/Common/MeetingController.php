@@ -38,11 +38,10 @@ class MeetingController extends Controller
     {
         try {
             $user = getUser();
+            $query = Meeting::orderby('id','DESC')->with('Attendees.user:id,name,email','documents');
             if($user->role_id == 2){
                 $attendee = Attendee::where('user_id',$user->id)->pluck('meeting_id')->toArray();
-                $query = Meeting::where('id',$attendee)->orderby('id','DESC')->with('Attendees','documents');
-            } else{
-                $query = Meeting::orderby('id','DESC')->with('Attendees','documents');
+                $query = $query->where('id',$attendee);
             }
         
             if(!empty($request->meeting_title))
@@ -139,8 +138,9 @@ class MeetingController extends Controller
             $meeting->is_repeat = ($request->is_repeat== true) ? 1:0;
             $meeting->save();
             /*------------Attendees---------------------*/
-            if(is_array(@$request->attendees) && count(@$request->attendees) >0 ){
-                foreach ($request->attendees as $key => $attendee) {
+            $attendees = $request->attendees;
+            if(is_array(@$attendees) && count(@$attendees) >0 ){
+                foreach ($attendees as $key => $attendee) {
                     $checkUser = User::where('email',$attendee['email'])->first();
                     /*---------Add User---------------------*/
                     if(empty($checkUser)){
@@ -176,8 +176,9 @@ class MeetingController extends Controller
 
             
             /*------------Documents---------------------*/
-            if(is_array(@$request->documents) && count(@$request->documents) >0 ){
-                foreach ($request->documents as $key => $document) {
+            $documents = $request->documents;
+            if(is_array(@$documents) && count(@$documents) >0 ){
+                foreach ($documents as $key => $document) {
                     $doument = new MeetingDocument;
                     $doument->meeting_id = $meeting->id;
                     $doument->document = $document['file'];
@@ -188,8 +189,6 @@ class MeetingController extends Controller
                 }
 
             }
-            
-            
 
             DB::commit();
             return response()->json(prepareResult(false, $meeting, trans('translate.created')),config('httpcodes.created'));
@@ -270,7 +269,7 @@ class MeetingController extends Controller
     {
         try {
             $meeting = Meeting::select('*')
-                ->with('Attendees','documents')
+                ->with('Attendees.user:id,name,email','documents')
                 ->find($id);
             if($meeting)
             {
@@ -330,9 +329,10 @@ class MeetingController extends Controller
             $meeting->is_repeat = ($request->is_repeat== true) ? 1:0;
             $meeting->save();
             /*------------Attendees---------------------*/
-             if(is_array(@$request->attendees) && count(@$request->attendees) >0 ){
+            $attendees = $request->attendees;
+             if(is_array(@$attendees) && count(@$attendees) >0 ){
                 $deleteOldAtt = Attendee::where('meeting_id',$meeting->id)->delete();
-                foreach ($request->attendees as $key => $attendee) {
+                foreach ($attendees as $key => $attendee) {
                     $checkUser = User::where('email',$attendee['email'])->first();
                     /*---------Add User---------------------*/
                     if(empty($checkUser)){
@@ -348,9 +348,10 @@ class MeetingController extends Controller
                 }
             }
              /*------------Documents---------------------*/
-            if(is_array(@$request->documents) && count(@$request->documents) >0 ){
+            $documents = $request->documents;
+            if(is_array(@$documents) && count(@$documents) >0 ){
                 $deleteOldDoc = MeetingDocument::where('meeting_id',$meeting->id)->delete();
-                foreach ($request->documents as $key => $document) {
+                foreach ($documents as $key => $document) {
                     $doument = new MeetingDocument;
                     $doument->meeting_id = $meeting->id;
                     $doument->document = $document['file'];
@@ -392,6 +393,47 @@ class MeetingController extends Controller
             }
             return response()->json(prepareResult(false, [], trans('translate.deleted')), config('httpcodes.success'));
         } catch (\Throwable $e) {
+            \Log::error($e);
+            return response()->json(prepareResult(true, $e->getMessage(), trans('translate.something_went_wrong')), config('httpcodes.internal_server_error'));
+        }
+    }
+
+    public function action(Request $request)
+    {
+        $validation = \Validator::make($request->all(), [
+            'ids'      => 'required',
+            'action'      => 'required',
+        ]);
+
+        if ($validation->fails()) {
+            return response(prepareResult(true, $validation->messages(), trans('translate.validation_failed')), config('httpcodes.bad_request'));
+        }
+        DB::beginTransaction();
+        try 
+        {
+            $ids = $request->ids;
+            if($request->action == 'delete')
+            {
+                $meetings = Meeting::whereIn('id',$ids)->delete();
+                $deleteOldAtt = Attendee::whereIn('meeting_id',$ids)->delete();
+                $deleteOldDoc = MeetingDocument::whereIn('meeting_id',$ids)->delete();
+                $message = trans('translate.deleted');
+            }
+            elseif($request->action == 'inactive')
+            {
+                Meeting::whereIn('id',$ids)->update(['status'=>"2"]);
+                $message = trans('translate.inactive');
+            }
+            elseif($request->action == 'active')
+            {
+                Meeting::whereIn('id',$ids)->update(['status'=>"1"]);
+                $message = trans('translate.active');
+            }
+            $meetings = Meeting::whereIn('id',$ids)->get();
+            DB::commit();
+            return response()->json(prepareResult(false, $meetings, $message), config('httpcodes.success'));
+        }
+        catch (\Throwable $e) {
             \Log::error($e);
             return response()->json(prepareResult(true, $e->getMessage(), trans('translate.something_went_wrong')), config('httpcodes.internal_server_error'));
         }

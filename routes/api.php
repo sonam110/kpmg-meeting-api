@@ -57,15 +57,18 @@ Route::namespace('App\Http\Controllers\API\Common')->group(function () {
         Route::resource('meeting', MeetingController::class)->only([
             'store','destroy','show', 'update'
         ]);
+        Route::post('meeting-action', [MeetingController::class, 'action'])->name('meeting-action');
 
         Route::post('notes',[NotesController::class, 'notes'])->name('notes');
         Route::resource('note', NotesController::class)->only([
             'store','destroy','show', 'update'
         ]);
+        Route::post('note-action', [NotesController::class, 'action'])->name('note-action');
         Route::post('action-items',[ActionItemController::class, 'actionItems'])->name('action-items');
         Route::resource('action-item', ActionItemController::class)->only([
             'store','destroy','show', 'update'
         ]);
+        Route::post('action-item-action', [ActionItemController::class, 'action'])->name('action-item-action');
        
 
     });
