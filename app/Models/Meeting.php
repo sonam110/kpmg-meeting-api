@@ -16,6 +16,10 @@ class Meeting extends Model
     }
     public function documents()
     {
-         return $this->hasMany(MeetingDocument::class, 'meeting_id', 'id');
+         return $this->hasMany(MeetingDocument::class, 'meeting_id', 'id')->where('type','meeting');
+    }
+    public function notes()
+    {
+         return $this->hasMany(MeetingNote::class, 'meeting_id', 'id');
     }
 }

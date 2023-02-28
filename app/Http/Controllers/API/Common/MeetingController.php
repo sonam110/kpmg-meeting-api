@@ -136,6 +136,7 @@ class MeetingController extends Controller
             $meeting->meeting_date = $request->meeting_date;
             $meeting->meeting_time = $request->meeting_time;
             $meeting->is_repeat = ($request->is_repeat== true) ? 1:0;
+            $meeting->status = $request->status ? $request->status : 1;
             $meeting->save();
             /*------------Attendees---------------------*/
             $attendees = $request->attendees;
@@ -181,6 +182,7 @@ class MeetingController extends Controller
                 foreach ($documents as $key => $document) {
                     $doument = new MeetingDocument;
                     $doument->meeting_id = $meeting->id;
+                    $doument->type = 'meeting';
                     $doument->document = $document['file'];
                     $doument->file_extension = $document['file_extension'];
                     $doument->file_name = $document['file_name'];
@@ -269,7 +271,7 @@ class MeetingController extends Controller
     {
         try {
             $meeting = Meeting::select('*')
-                ->with('Attendees.user:id,name,email','documents')
+                ->with('Attendees.user:id,name,email','documents','notes')
                 ->find($id);
             if($meeting)
             {
@@ -327,6 +329,7 @@ class MeetingController extends Controller
             $meeting->meeting_date = $request->meeting_date;
             $meeting->meeting_time = $request->meeting_time;
             $meeting->is_repeat = ($request->is_repeat== true) ? 1:0;
+            $meeting->status = $request->status ? $request->status : 1;
             $meeting->save();
             /*------------Attendees---------------------*/
             $attendees = $request->attendees;
@@ -350,10 +353,11 @@ class MeetingController extends Controller
              /*------------Documents---------------------*/
             $documents = $request->documents;
             if(is_array(@$documents) && count(@$documents) >0 ){
-                $deleteOldDoc = MeetingDocument::where('meeting_id',$meeting->id)->delete();
+                $deleteOldDoc = MeetingDocument::where('meeting_id',$meeting->id)->where('type','meeting')->delete();
                 foreach ($documents as $key => $document) {
                     $doument = new MeetingDocument;
                     $doument->meeting_id = $meeting->id;
+                    $doument->type = 'meeting';
                     $doument->document = $document['file'];
                     $doument->file_extension = $document['file_extension'];
                     $doument->file_name = $document['file_name'];

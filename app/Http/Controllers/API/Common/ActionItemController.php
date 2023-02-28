@@ -4,6 +4,7 @@ namespace App\Http\Controllers\API\Common;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use App\Models\MeetingDocument;
 use App\Models\ActionItem;
 use App\Models\ActionSubItem;
 use Validator;
@@ -27,9 +28,9 @@ class ActionItemController extends Controller
             $user = getUser();
 
             if($user->role_id == 1){
-                $query = ActionItem::where('owner_id',$user->id)->orderby('id','DESC')->with('meeting');
+                $query = ActionItem::where('owner_id',$user->id)->orderby('id','DESC')->with('meeting','documents');
             } else{
-                $query = ActionItem::orderby('id','DESC')->with('meeting');
+                $query = ActionItem::orderby('id','DESC')->with('meeting','documents');
             }
             if(!empty($request->meeting_id))
             {
@@ -115,6 +116,22 @@ class ActionItemController extends Controller
             $actionItem->comment =  $request->comment;
             $actionItem->status =  (!empty($request->status)) ? $request->status : 0;
             $actionItem->save();
+
+             /*------------Documents---------------------*/
+            $documents = $request->documents;
+            if(is_array(@$documents) && count(@$documents) >0 ){
+                foreach ($documents as $key => $document) {
+                    $doument = new MeetingDocument;
+                    $doument->action_id = $actionItem->id;
+                    $doument->type = 'action';
+                    $doument->document = $document['file'];
+                    $doument->file_extension = $document['file_extension'];
+                    $doument->file_name = $document['file_name'];
+                    $doument->uploading_file_name = $document['uploading_file_name'];
+                    $doument->save();
+                }
+
+            }
             
             DB::commit();
             return response()->json(prepareResult(false, $actionItem, trans('translate.created')),config('httpcodes.created'));
@@ -198,6 +215,23 @@ class ActionItemController extends Controller
             $actionItem->comment =  $request->comment;
             $actionItem->status =  (!empty($request->status)) ? $request->status : 0;
             $actionItem->save();
+
+             /*------------Documents---------------------*/
+            $documents = $request->documents;
+            if(is_array(@$documents) && count(@$documents) >0 ){
+                $deleteOldDoc = MeetingDocument::where('action_id',$actionItem->id)->where('type','action')->delete();
+                foreach ($documents as $key => $document) {
+                    $doument = new MeetingDocument;
+                    $doument->action_id = $actionItem->id;
+                    $doument->type = 'action';
+                    $doument->document = $document['file'];
+                    $doument->file_extension = $document['file_extension'];
+                    $doument->file_name = $document['file_name'];
+                    $doument->uploading_file_name = $document['uploading_file_name'];
+                    $doument->save();
+                }
+
+            }
             
             DB::commit();
             return response()->json(prepareResult(false, $actionItem, trans('translate.updated')),config('httpcodes.success'));

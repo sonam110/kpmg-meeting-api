@@ -4,6 +4,7 @@ namespace App\Http\Controllers\API\Common;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use App\Models\MeetingDocument;
 use App\Models\MeetingNote;
 use Validator;
 use Auth;
@@ -23,7 +24,7 @@ class NotesController extends Controller
     public function notes(Request $request)
     {
         try {
-            $query = MeetingNote::orderby('id','DESC')->with('meeting','documents','createdBy:id,name,email','editedBy:id,name,email','actionItems');
+            $query = MeetingNote::orderby('id','DESC')->with('meeting','documents','createdBy:id,name,email','editedBy:id,name,email','actionItems.owner:id,name,email');
             
             if(!empty($request->meeting_id))
             {
@@ -93,8 +94,25 @@ class NotesController extends Controller
             $meetingNote->duration = $request->duration;
             $meetingNote->notes  = $request->notes;
             $meetingNote->decision = $request->decision;
+            $meetingNote->status = $request->status ? $request->status : 1;
             $meetingNote->created_by = auth()->user()->id;
             $meetingNote->save();
+
+             /*------------Documents---------------------*/
+            $documents = $request->documents;
+            if(is_array(@$documents) && count(@$documents) >0 ){
+                foreach ($documents as $key => $document) {
+                    $doument = new MeetingDocument;
+                    $doument->note_id = $meetingNote->id;
+                    $doument->type = 'note';
+                    $doument->document = $document['file'];
+                    $doument->file_extension = $document['file_extension'];
+                    $doument->file_name = $document['file_name'];
+                    $doument->uploading_file_name = $document['uploading_file_name'];
+                    $doument->save();
+                }
+
+            }
             
             DB::commit();
             return response()->json(prepareResult(false, $meetingNote, trans('translate.created')),config('httpcodes.created'));
@@ -171,7 +189,25 @@ class NotesController extends Controller
             $meetingNote->decision = $request->decision;
             $meetingNote->edited_by = auth()->user()->id;
             $meetingNote->edited_date = date('Y-m-d');
+            $meetingNote->status = $request->status ? $request->status : 1;
             $meetingNote->save();
+
+             /*------------Documents---------------------*/
+            $documents = $request->documents;
+            if(is_array(@$documents) && count(@$documents) >0 ){
+                $deleteOldDoc = MeetingDocument::where('note_id',$meetingNote->id)->where('type','note')->delete();
+                foreach ($documents as $key => $document) {
+                    $doument = new MeetingDocument;
+                    $doument->note_id = $meetingNote->id;
+                    $doument->type = 'note';
+                    $doument->document = $document['file'];
+                    $doument->file_extension = $document['file_extension'];
+                    $doument->file_name = $document['file_name'];
+                    $doument->uploading_file_name = $document['uploading_file_name'];
+                    $doument->save();
+                }
+
+            }
             
             DB::commit();
             return response()->json(prepareResult(false, $meetingNote, trans('translate.updated')),config('httpcodes.success'));

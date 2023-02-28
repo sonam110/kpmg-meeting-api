@@ -17,9 +17,13 @@ class MeetingNote extends Model
     {
         return $this->belongsTo(Meeting::class, 'meeting_id', 'id');
     }
+    // public function documents()
+    // {
+    //     return $this->hasMany(MeetingDocument::class, 'meeting_id', 'meeting_id');
+    // }
     public function documents()
     {
-        return $this->hasMany(MeetingDocument::class, 'meeting_id', 'meeting_id');
+        return $this->hasMany(MeetingDocument::class, 'note_id', 'id')->where('type','note');
     }
     public function createdBy()
     {
