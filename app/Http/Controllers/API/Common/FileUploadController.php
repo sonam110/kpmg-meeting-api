@@ -52,9 +52,9 @@ class FileUploadController extends Controller
                     {
                         //Thumb image generate
                         $imgthumb = Image::make($value->getRealPath());
-                        $imgthumb->resize(100, null, function ($constraint) {
-                            $constraint->aspectRatio();
-                        });
+                        // $imgthumb->resize(100, null, function ($constraint) {
+                        //     $constraint->aspectRatio();
+                        // });
                         $imgthumb->save($destinationPath.$fileName);
                     }
                     else
@@ -87,9 +87,9 @@ class FileUploadController extends Controller
                 {
                     //Thumb image generate
                     $imgthumb = Image::make($file->getRealPath());
-                    $imgthumb->resize(100, null, function ($constraint) {
-                        $constraint->aspectRatio();
-                    });
+                    // $imgthumb->resize(100, null, function ($constraint) {
+                    //     $constraint->aspectRatio();
+                    // });
                     $imgthumb->save($destinationPath.$fileName);
                 }
                 else

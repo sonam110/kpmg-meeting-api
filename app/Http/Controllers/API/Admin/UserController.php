@@ -227,22 +227,30 @@ class UserController extends Controller
             }
             if($user->role_id=='1')
             {
-                return response(prepareResult(true, [], trans('translate.record_not_found')), config('httpcodes.not_found'));
+                $masterUser = MasterUser::find($id);
+                $masterUser->name = $request->name;          
+                $masterUser->save();
+                
+                $user->name = $request->name;
+                $user->mobile_number = $request->mobile_number;
+                $user->designation = $request->designation;
+                $user->save();
             }
-            
+            else
+            {
+                $masterUser = MasterUser::find($id);
+                $masterUser->name = $request->name;
+                $masterUser->email  = $request->email;           
+                $masterUser->save();
 
-            $masterUser = MasterUser::find($id);
-            $masterUser->name = $request->name;
-            $masterUser->email  = $request->email;           
-            $masterUser->save();
-
-            $user->role_id = $request->role_id;
-            $user->name = $request->name;
-            $user->email  = $request->email;
-            $user->mobile_number = $request->mobile_number;
-            $user->address = $request->address;
-            $user->designation = $request->designation;
-            $user->save();
+                $user->role_id = $request->role_id;
+                $user->name = $request->name;
+                $user->email  = $request->email;
+                $user->mobile_number = $request->mobile_number;
+                $user->address = $request->address;
+                $user->designation = $request->designation;
+                $user->save();
+            }
 
             //delete old role and permissions
             DB::table('model_has_roles')->where('model_id', $user->id)->delete();
