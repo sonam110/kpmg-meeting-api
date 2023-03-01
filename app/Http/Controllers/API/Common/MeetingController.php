@@ -48,6 +48,22 @@ class MeetingController extends Controller
             {
                 $query->where('meeting_title', 'LIKE', '%'.$request->meeting_title.'%');
             }
+            if(!empty($request->meeting_ref_no))
+            {
+                $query->where('meeting_ref_no', 'LIKE', '%'.$request->meeting_ref_no.'%');
+            }
+            if(!empty($request->meeting_date))
+            {
+                $query->where('meeting_date', $request->meeting_date);
+            }
+            if(!empty($request->status))
+            {
+                $query->where('status', $request->status);
+            }
+            if(!empty($request->meeting_time))
+            {
+                $query->where('meeting_time', $request->meeting_time);
+            }
             if(!empty($request->search_keyword))
             {
                 $query->where('meeting_title', 'LIKE', '%'.$request->search_keyword.'%')->orWhere('agenda_of_meeting', 'LIKE', '%'.$request->search_keyword.'%');

@@ -40,9 +40,21 @@ class UserController extends Controller
             {
                 $query->where('name', 'LIKE', '%'.$request->name.'%');
             }
-            if(!empty($request->status))
+            if(!empty($request->designation))
             {
-                $query->where('status', $request->status);
+                $query->where('designation', 'LIKE', '%'.$request->designation.'%');
+            }
+            if(!empty($request->mobile_number))
+            {
+                $query->where('mobile_number', 'LIKE', '%'.$request->mobile_number.'%');
+            }
+            if($request->status=='active')
+            {
+                $query->where('status', 1);
+            }
+            elseif($request->status=='inactive')
+            {
+                $query->where('status', 0);
             }
 
             if(!empty($request->per_page_record))
