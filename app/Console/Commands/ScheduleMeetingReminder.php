@@ -41,11 +41,11 @@ class ScheduleMeetingReminder extends Command
             $diff_in_minutes = $meeting_time->diffInMinutes($current_time);
             if($diff_in_minutes=='15'){
                 $content = [
-                "name" => @$meeting->user->name,
-                "meeting_title" => @$meeting->meeting_title,
-                "meeting_date" => @$meeting->meeting_date,
-                "meeting_time" => @$meeting->meeting_time,
-                "agenda_of_meeting" => @$meeting->agenda_of_meeting,
+                    "name" => @$meeting->user->name,
+                    "meeting_title" => @$meeting->meeting_title,
+                    "meeting_date" => @$meeting->meeting_date,
+                    "meeting_time" => @$meeting->meeting_time,
+                    "agenda_of_meeting" => @$meeting->agenda_of_meeting,
                
                 ];
 
