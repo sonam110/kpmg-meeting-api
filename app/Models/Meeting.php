@@ -10,7 +10,7 @@ class Meeting extends Model
 {
     use HasFactory;
 
-    public function Attendees()
+    public function attendees()
     {
          return $this->hasMany(Attendee::class, 'meeting_id', 'id');
     }

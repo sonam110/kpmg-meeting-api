@@ -26,7 +26,7 @@ return new class extends Migration
             $table->date('due_date')->nullable();
             $table->string('complete_percentage')->nullable();
             $table->string('image')->nullable();
-            $table->tinyInteger('status')->default(0)->comment('0=No Started,1=In Progress,2=Completed,3=On Hold,4=Cancelled');
+            $table->enum('status',['pending','in_progress','completed','on_hold','cancelled'])->default('pending');
             $table->date('complete_date')->nullable();
             $table->text('comment')->nullable();
             $table->timestamps();

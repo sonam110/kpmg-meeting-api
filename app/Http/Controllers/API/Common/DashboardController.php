@@ -8,14 +8,19 @@ use Validator;
 use Auth;
 use DB;
 use App\Models\ActionItem;
+use App\Models\MeetingMailLog;
+
 use App\Models\Meeting;
 use App\Models\MeetingDocument;
 use App\Models\MeetingLog;
 use App\Models\Attendee;
+use Illuminate\Support\Carbon;
 use App\Models\User;
+use App\Mail\scheduleMeetingMail;
+use Mail;
 class DashboardController extends Controller
 {
-     public function dashboard()
+    public function dashboard()
     {
         try {
             $user = getUser();
@@ -36,5 +41,9 @@ class DashboardController extends Controller
         } catch(Exception $exception) {
                 return prepareResult(false, $exception->getMessage(),$exception->getMessage(), config('httpcodes.internal_server_error'));   
         }  
+    }
+
+    public function test(Request $request)
+    {
     }
 }

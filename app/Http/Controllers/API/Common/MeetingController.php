@@ -37,48 +37,63 @@ class MeetingController extends Controller
     public function meetings(Request $request)
     {
         try {
+            // return auth()->id();
             $user = getUser();
-            $query = Meeting::orderby('id','DESC')->with('Attendees.user:id,name,email','documents');
+            $query = Meeting::select('meetings.*')->orderby('meetings.id','DESC')
+            ->with('attendees.user:id,name,email','documents');
             if($user->role_id == 2){
-                $attendee = Attendee::where('user_id',$user->id)->pluck('meeting_id')->toArray();
-                $query = $query->where('id',$attendee);
+                $attendees = Attendee::where('user_id',$user->id)
+                ->pluck('meeting_id')
+                ->toArray();
+                $query = $query->whereIn('meetings.id',$attendees);
             }
         
             if(!empty($request->meeting_title))
             {
-                $query->where('meeting_title', 'LIKE', '%'.$request->meeting_title.'%');
+                $query->where('meetings.meeting_title', 'LIKE', '%'.$request->meeting_title.'%');
             }
             if(!empty($request->meeting_ref_no))
             {
-                $query->where('meeting_ref_no', 'LIKE', '%'.$request->meeting_ref_no.'%');
+                $query->where('meetings.meeting_ref_no', 'LIKE', '%'.$request->meeting_ref_no.'%');
             }
             if(!empty($request->meeting_date))
             {
-                $query->where('meeting_date', $request->meeting_date);
+                $query->where('meetings.meeting_date', $request->meeting_date);
             }
             if(!empty($request->status))
             {
-                $query->where('status', $request->status);
+                $query->where('meetings.status', $request->status);
             }
-            if(!empty($request->meeting_time))
+            if(!empty($request->meeting_time_start))
             {
-                $query->where('meeting_time', $request->meeting_time);
+                $query->where('meetings.meeting_time_start', $request->meeting_time_start);
+            }
+            if(!empty($request->meeting_time_end))
+            {
+                $query->where('meetings.meeting_time_end', $request->meeting_time_end);
             }
             if(!empty($request->search_keyword))
             {
-                $query->where('meeting_title', 'LIKE', '%'.$request->search_keyword.'%')->orWhere('agenda_of_meeting', 'LIKE', '%'.$request->search_keyword.'%');
+                $query->where('meetings.meeting_title', 'LIKE', '%'.$request->search_keyword.'%')->orWhere('meetings.agenda_of_meeting', 'LIKE', '%'.$request->search_keyword.'%');
             }
             if(!empty($request->start_date) && !empty($request->end_date))
             {
-                $query->whereDate('meeting_date', '>=', $request->start_date)->whereDate('meeting_date', '<=', $request->end_date);
+                $query->whereDate('meetings.meeting_date', '>=', $request->start_date)->whereDate('meetings.meeting_date', '<=', $request->end_date);
             }
             elseif(!empty($request->start_date) && empty($request->end_date))
             {
-                $query->whereDate('meeting_date', ">=" ,$request->start_date);
+                $query->whereDate('meetings.meeting_date', ">=" ,$request->start_date);
             }
             elseif(empty($request->start_date) && !empty($request->end_date))
             {
-                $query->whereDate('meeting_date', '<=', $request->end_date);
+                $query->whereDate('meetings.meeting_date', '<=', $request->end_date);
+            }
+            if(!empty($request->attendee_id))
+            {
+                $query->join('attendees', function($join) use ($request) {
+                    $join->on('attendees.meeting_id', '=', 'meetings.id')
+                    ->where('attendees.user_id',$request->attendee_id);
+                });
             }
 
 
@@ -131,7 +146,8 @@ class MeetingController extends Controller
         $validation = \Validator::make($request->all(), [
             'meeting_title'      => 'required',
             'meeting_date'   => 'required',
-            'meeting_time'   => 'required',
+            'meeting_time_start'   => 'required',
+            'meeting_time_end'   => 'required',
             "attendees"    => "required|array|min:1",
             "attendees.*"  => "required|distinct|min:1",
             'attendees.*.email' => 'required|email'
@@ -150,7 +166,8 @@ class MeetingController extends Controller
             $meeting->meeting_ref_no = $request->meeting_ref_no;
             $meeting->agenda_of_meeting  = $request->agenda_of_meeting;
             $meeting->meeting_date = $request->meeting_date;
-            $meeting->meeting_time = $request->meeting_time;
+            $meeting->meeting_time_start = $request->meeting_time_start;
+            $meeting->meeting_time_end = $request->meeting_time_end;
             $meeting->is_repeat = ($request->is_repeat== true) ? 1:0;
             $meeting->status = $request->status ? $request->status : 1;
             $meeting->save();
@@ -180,7 +197,8 @@ class MeetingController extends Controller
                             "name" =>$name,
                             "meeting_title" => $request->meeting_title,
                             "meeting_date" => $request->meeting_date,
-                            "meeting_time" => $request->meeting_time,
+                            "meeting_time_start" => $request->meeting_time_start,
+                            "meeting_time_end" => $request->meeting_time_end,
                             "agenda_of_meeting" => $request->agenda_of_meeting,
                    
                         ];
@@ -287,7 +305,7 @@ class MeetingController extends Controller
     {
         try {
             $meeting = Meeting::select('*')
-                ->with('Attendees.user:id,name,email','documents','notes')
+                ->with('attendees.user:id,name,email','documents','notes')
                 ->find($id);
             if($meeting)
             {
@@ -323,7 +341,8 @@ class MeetingController extends Controller
         $validation = \Validator::make($request->all(), [
             'meeting_title'      => 'required',
             'meeting_date'   => 'required',
-            'meeting_time'   => 'required',
+            'meeting_time_start'   => 'required',
+            'meeting_time_end'   => 'required',
             "attendees"    => "required|array|min:1",
             "attendees.*"  => "required|distinct|min:1",
         ]);
@@ -343,7 +362,8 @@ class MeetingController extends Controller
             $meeting->meeting_ref_no = $request->meeting_ref_no;
             $meeting->agenda_of_meeting  = $request->agenda_of_meeting;
             $meeting->meeting_date = $request->meeting_date;
-            $meeting->meeting_time = $request->meeting_time;
+            $meeting->meeting_time_start = $request->meeting_time_start;
+            $meeting->meeting_time_end = $request->meeting_time_end;
             $meeting->is_repeat = ($request->is_repeat== true) ? 1:0;
             $meeting->status = $request->status ? $request->status : 1;
             $meeting->save();
