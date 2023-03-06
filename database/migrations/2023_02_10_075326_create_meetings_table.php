@@ -20,7 +20,8 @@ return new class extends Migration
             $table->string('meeting_ref_no')->nullable();
             $table->text('agenda_of_meeting')->nullable();
             $table->date('meeting_date');
-            $table->time('meeting_time');
+            $table->time('meeting_time_start');
+            $table->time('meeting_time_end');
             $table->boolean('status')->default('1')->comment('1:Active,2:Inactive');
             $table->tinyInteger('is_repeat')->default(0)->comment('0=No,1=Yes');
             $table->timestamps();

@@ -28,9 +28,9 @@ class ActionItemController extends Controller
             $user = getUser();
 
             if($user->role_id == 1){
-                $query = ActionItem::where('owner_id',$user->id)->orderby('id','DESC')->with('meeting','documents');
-            } else{
                 $query = ActionItem::orderby('id','DESC')->with('meeting','documents');
+            } else{
+                $query = ActionItem::where('owner_id',$user->id)->orderby('id','DESC')->with('meeting','documents');
             }
             if(!empty($request->meeting_id))
             {
@@ -39,6 +39,30 @@ class ActionItemController extends Controller
             if(!empty($request->owner_id))
             {
                 $query->where('owner_id', $request->owner_id);
+            }
+            if(!empty($request->task))
+            {
+                $query->where('task', 'LIKE', '%'.$request->task.'%');
+            }
+            if(!empty($request->comment))
+            {
+                $query->where('comment', 'LIKE', '%'.$request->comment.'%');
+            }
+            if(!empty($request->mm_ref_id))
+            {
+                $query->where('mm_ref_id', 'LIKE', '%'.$request->mm_ref_id.'%');
+            }
+            if(!empty($request->due_date))
+            {
+                $query->where('due_date', $request->due_date);
+            }
+            if(!empty($request->priority))
+            {
+                $query->where('priority', $request->priority);
+            }
+            if(!empty($request->status))
+            {
+                $query->where('status', $request->status);
             }
             
             if(!empty($request->per_page_record))
@@ -110,11 +134,10 @@ class ActionItemController extends Controller
             $actionItem->priority  = $request->priority;
             $actionItem->due_date =  $request->due_date;
             $actionItem->complete_percentage =  $request->complete_percentage;
-            $actionItem->status =  $request->status;
             $actionItem->image =  $request->image;
             $actionItem->complete_date =  $request->complete_date;
             $actionItem->comment =  $request->comment;
-            $actionItem->status =  (!empty($request->status)) ? $request->status : 0;
+            $actionItem->status =  (!empty($request->status)) ? $request->status : 'pending';
             $actionItem->save();
 
              /*------------Documents---------------------*/
@@ -209,11 +232,10 @@ class ActionItemController extends Controller
             $actionItem->priority  = $request->priority;
             $actionItem->due_date =  $request->due_date;
             $actionItem->complete_percentage =  $request->complete_percentage;
-            $actionItem->status =  $request->status;
             $actionItem->image =  $request->image;
             $actionItem->complete_date =  $request->complete_date;
             $actionItem->comment =  $request->comment;
-            $actionItem->status =  (!empty($request->status)) ? $request->status : 0;
+            $actionItem->status =  (!empty($request->status)) ? $request->status : 'pending';
             $actionItem->save();
 
              /*------------Documents---------------------*/
@@ -267,30 +289,46 @@ class ActionItemController extends Controller
         try 
         {
             $ids = $request->ids;
-            if($request->action == 'in-process')
+            if($request->action == 'in_progress')
             {
-                ActionItem::whereIn('id',$ids)->update(['status'=>"1"]);
+                ActionItem::whereIn('id',$ids)->update(['status'=>"in_progress"]);
                 $message = trans('translate.in_process');
             }
             elseif($request->action == 'completed')
             {
-                ActionItem::whereIn('id',$ids)->update(['status'=>"2"]);
+                ActionItem::whereIn('id',$ids)->update(['status'=>"completed","complete_date"=>date("Y-m-d"),"complete_percentage"=>"100"]);
                 $message = trans('translate.completed');
             }
-            elseif($request->action == 'on-hold')
+            elseif($request->action == 'on_hold')
             {
-                ActionItem::whereIn('id',$ids)->update(['status'=>"3"]);
+                ActionItem::whereIn('id',$ids)->update(['status'=>"on_hold"]);
                 $message = trans('translate.on_hold');
             }
             elseif($request->action == 'cancelled')
             {
-                ActionItem::whereIn('id',$ids)->update(['status'=>"4"]);
+                ActionItem::whereIn('id',$ids)->update(['status'=>"cancelled"]);
                 $message = trans('translate.cancelled');
             }
             elseif($request->action == 'pending')
             {
-                ActionItem::whereIn('id',$ids)->update(['status'=>"0"]);
+                ActionItem::whereIn('id',$ids)->update(['status'=>"pending"]);
                 $message = trans('translate.pending');
+            }
+            elseif($request->action == 'percentage')
+            {
+                if($request->percent == 100)
+                {
+                    ActionItem::whereIn('id',$ids)->update(['status'=>"completed","complete_date"=>date("Y-m-d"),"complete_percentage"=>"100"]);
+                }
+                else
+                {
+                    ActionItem::whereIn('id',$ids)->update(['complete_percentage'=>$request->percent]);
+                }
+                $message = trans('translate.pending');
+            }
+            else
+            {
+                return response()->json(prepareResult(true, [], 'Provide a valid Action'), config('httpcodes.success'));
             }
             $actionItems = ActionItem::whereIn('id',$ids)->get();
             DB::commit();

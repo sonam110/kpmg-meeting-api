@@ -35,6 +35,7 @@ Route::namespace('App\Http\Controllers\API\Common')->group(function () {
         Route::get('authentication/reset-password/{token}','resetPassword')->name('password.reset');
         Route::post('update-password', 'updatePassword')->name('update-password');
     });
+
     Route::group(['middleware' => 'auth:api'],function () {
         Route::controller(AuthController::class)->group(function () {
             Route::post('logout', 'logout')->name('logout');
@@ -42,6 +43,7 @@ Route::namespace('App\Http\Controllers\API\Common')->group(function () {
         });
 
         Route::post('dashboard',[DashboardController::class, 'dashboard'])->name('dashboard');
+        Route::post('test-function',[DashboardController::class, 'test'])->name('test-function');
 
         /*----------Roles------------------------------*/
         Route::post('roles',[RoleController::class, 'roles'])->name('roles');
@@ -53,22 +55,39 @@ Route::namespace('App\Http\Controllers\API\Common')->group(function () {
             Route::post('file-uploads', 'fileUploads')->name('file-uploads');
             Route::post('file-upload', 'store')->name('file-upload');
         });
-        Route::post('meetings',[MeetingController::class, 'meetings'])->name('meetings');
-        Route::resource('meeting', MeetingController::class)->only([
-            'store','destroy','show', 'update'
-        ]);
-        Route::post('meeting-action', [MeetingController::class, 'action'])->name('meeting-action');
 
-        Route::post('notes',[NotesController::class, 'notes'])->name('notes');
-        Route::resource('note', NotesController::class)->only([
-            'store','destroy','show', 'update'
-        ]);
-        Route::post('note-action', [NotesController::class, 'action'])->name('note-action');
-        Route::post('action-items',[ActionItemController::class, 'actionItems'])->name('action-items');
-        Route::resource('action-item', ActionItemController::class)->only([
-            'store','destroy','show', 'update'
-        ]);
-        Route::post('action-item-action', [ActionItemController::class, 'action'])->name('action-item-action');
+        /*-------------Meeting--------------------*/
+        Route::controller(MeetingController::class)->group(function () {
+            Route::post('meetings','meetings')->name('meetings');
+            Route::resource('meeting', MeetingController::class)->only([
+                'store','destroy','show', 'update'
+            ]);
+            Route::post('meeting-action', 'action')->name('meeting-action');
+        });
+
+        /*-------------Meeting-Notes-------------------------*/
+        Route::controller(NotesController::class)->group(function () {
+            Route::post('notes','notes')->name('notes');
+            Route::resource('note', NotesController::class)->only([
+                'store','destroy','show', 'update'
+            ]);
+            Route::post('note-action', 'action')->name('note-action');
+        });
+        
+        /*-------------Action-Item------------------------*/
+        Route::controller(ActionItemController::class)->group(function () {
+            Route::post('action-items','actionItems')->name('action-items');
+            Route::resource('action-item', ActionItemController::class)->only([
+                'store','destroy','show', 'update'
+            ]);
+            Route::post('action-item-action', 'action')->name('action-item-action');
+        });
+
+        /*-------------Permission------------------------*/
+        Route::controller(PermissionController::class)->group(function () {
+            Route::post('permissions','permissions');
+            Route::apiResource('permission',PermissionController::class)->only(['store','destroy','show', 'update']);
+        });
        
 
     });
@@ -77,14 +96,19 @@ Route::namespace('App\Http\Controllers\API\Common')->group(function () {
 
 Route::namespace('App\Http\Controllers\API\Admin')->group(function () {
     Route::group(['middleware' => 'auth:api'],function () {
-        Route::post('users',[UserController::class, 'users'])->name('users');
-        Route::post('user-action',[UserController::class, 'userAction'])->name('user-action');
-        Route::resource('user', UserController::class)->only([
-            'store','destroy','show', 'update'
-        ]);
+        /*---------------------User------------------------*/
+        Route::controller(UserController::class)->group(function () {
+            Route::post('users','users')->name('users');
+            Route::post('user-action','userAction')->name('user-action');
+            Route::resource('user', UserController::class)->only([
+                'store','destroy','show', 'update'
+            ]);
+        });
 
-        Route::get('app-setting',[AppSettingController::class, 'appSetting'])->name('app-setting');
-        Route::post('update-setting',[AppSettingController::class, 'updateSetting'])->name('update-setting');
+        Route::controller(AppSettingController::class)->group(function () {
+            Route::get('app-setting','appSetting')->name('app-setting');
+            Route::post('update-setting','updateSetting')->name('update-setting');
+        });
 
     });
 });    
