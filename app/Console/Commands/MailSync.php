@@ -43,6 +43,7 @@ class MailSync extends Command
     public function handle()
     {
         try {
+            File::ensureDirectoryExists('public/ics');
             $incoming_mail_server = '{outlook.office365.com:993/imap/ssl/novalidate-cert}INBOX'; 
             //This is an example incoming mail server for Gmail which you can configure to your outlook, check out the manual on Supported IMAP client list below.
               
@@ -69,7 +70,7 @@ class MailSync extends Command
                 $fileName = $random.'-invite.ics';
                 $body =  (imap_fetchbody($mbox,$overview->msgno,1.1));
                 $decoded = base64_decode($body);
-                file_put_contents($fileName,$decoded);
+                file_put_contents('public/ics/'.$fileName,$decoded);
 
                 $message = imap_body($mbox, $overview->msgno);
 
@@ -146,7 +147,7 @@ class MailSync extends Command
                     $meeting->meeting_time_start = date('H:i:',strtotime($startDate));
                     $meeting->meeting_time_end = date('H:i:',strtotime($endDate));
                     $meeting->agenda_of_meeting = (!empty(@$description[1])) ? @$description[1]: @$description[0];
-                    $meeting->invite_file =$fileName;
+                    $meeting->invite_file ='ics/'.$fileName;
                     $meeting->save();
 
                         foreach ($attendees as $key => $attendee) {
