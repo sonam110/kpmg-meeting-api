@@ -19,6 +19,8 @@ use Carbon\Carbon;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 use DB;
+use File;
+
 class MailSync extends Command
 {
     /**
