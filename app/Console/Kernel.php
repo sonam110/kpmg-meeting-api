@@ -17,6 +17,7 @@ class Kernel extends ConsoleKernel
     protected $commands = [
         Commands\ScheduleMeetingReminder::class,
         Commands\ActionItemReminder::class,
+        Commands\MailSync::class,
     ];
 
     protected function schedule(Schedule $schedule)
@@ -26,6 +27,10 @@ class Kernel extends ConsoleKernel
         ->timezone(env('TIME_ZONE', 'Asia/Calcutta'));
 
         $schedule->command('send:action-items-reminder')
+        ->everyMinute()
+        ->timezone(env('TIME_ZONE', 'Asia/Calcutta'));
+
+        $schedule->command('mail:sync')
         ->everyMinute()
         ->timezone(env('TIME_ZONE', 'Asia/Calcutta'));
     }
