@@ -24,6 +24,7 @@ return new class extends Migration
             $table->time('meeting_time_end');
             $table->integer('message_id')->nullable();
             $table->string('invite_file')->nullable();
+            $table->string('meeting_link')->nullable();
             $table->boolean('status')->default('1')->comment('1:Active,2:Inactive');
             $table->tinyInteger('is_repeat')->default(0)->comment('0=No,1=Yes');
             $table->timestamps();

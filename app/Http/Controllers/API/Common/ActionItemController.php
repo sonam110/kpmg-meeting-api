@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use App\Models\MeetingDocument;
 use App\Models\ActionItem;
 use App\Models\ActionSubItem;
+use App\Models\Notification;
 use Validator;
 use Auth;
 use Exception;
@@ -155,6 +156,16 @@ class ActionItemController extends Controller
                 }
 
             }
+
+            $notification = new Notification;
+            $notification->user_id              = $request->owner_id;
+            $notification->sender_id            = auth()->id();
+            $notification->status_code          = 'success';
+            $notification->title                = 'New action Item';
+            $notification->message              = '';
+            $notification->data_id              = $actionItem->id;
+            $notification->read_status          = false;
+            $notification->save();
             
             DB::commit();
             return response()->json(prepareResult(false, $actionItem, trans('translate.created')),config('httpcodes.created'));

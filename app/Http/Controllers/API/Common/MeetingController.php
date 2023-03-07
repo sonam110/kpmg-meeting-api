@@ -12,6 +12,7 @@ use App\Models\MasterUser;
 use App\Models\Module;
 use App\Models\AssigneModule;
 use Illuminate\Support\Facades\Hash;
+use App\Models\Notification;
 use App\Models\User;
 use Validator;
 use Auth;
@@ -168,6 +169,7 @@ class MeetingController extends Controller
             $meeting->meeting_date = $request->meeting_date;
             $meeting->meeting_time_start = $request->meeting_time_start;
             $meeting->meeting_time_end = $request->meeting_time_end;
+            $meeting->meeting_link = $request->meeting_link;
             $meeting->is_repeat = ($request->is_repeat== true) ? 1:0;
             $meeting->status = $request->status ? $request->status : 1;
             $meeting->save();
@@ -192,20 +194,28 @@ class MeetingController extends Controller
                     $attende->save();
                     
 
-                    if (env('IS_MAIL_ENABLE', false) == true) {
-                        $content = [
-                            "name" =>$name,
-                            "meeting_title" => $request->meeting_title,
-                            "meeting_date" => $request->meeting_date,
-                            "meeting_time_start" => $request->meeting_time_start,
-                            "meeting_time_end" => $request->meeting_time_end,
-                            "agenda_of_meeting" => $request->agenda_of_meeting,
+                    // if (env('IS_MAIL_ENABLE', false) == true) {
+                    //     $content = [
+                    //         "name" =>$name,
+                    //         "meeting_title" => $request->meeting_title,
+                    //         "meeting_date" => $request->meeting_date,
+                    //         "meeting_time_start" => $request->meeting_time_start,
+                    //         "meeting_time_end" => $request->meeting_time_end,
+                    //         "agenda_of_meeting" => $request->agenda_of_meeting,
                    
-                        ];
-                       
-                        $recevier = Mail::to($attendee['email'])->send(new MeetingMail($content));
-                    }
+                    //     ];
+                    //     $recevier = Mail::to($attendee['email'])->send(new MeetingMail($content));
+                    // }
 
+                    $notification = new Notification;
+                    $notification->user_id              = $user_id;
+                    $notification->sender_id            = auth()->id();
+                    $notification->status_code          = 'success';
+                    $notification->title                = 'New Meeting Invitation';
+                    $notification->message              = 'New Meting Invitation for Meeting '.$meeting->meeting_title.' which will be held on '.$meeting->meeting_date.' between '.$meeting->meeting_time_start.'-'.$meeting->meeting_time_end.'.';
+                    $notification->read_status          = false;
+                    $notification->data_id              = $meeting->id;
+                    $notification->save();
                 }
             }
 
@@ -364,6 +374,7 @@ class MeetingController extends Controller
             $meeting->meeting_date = $request->meeting_date;
             $meeting->meeting_time_start = $request->meeting_time_start;
             $meeting->meeting_time_end = $request->meeting_time_end;
+            $meeting->meeting_link = $request->meeting_link;
             $meeting->is_repeat = ($request->is_repeat== true) ? 1:0;
             $meeting->status = $request->status ? $request->status : 1;
             $meeting->save();

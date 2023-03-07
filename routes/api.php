@@ -88,6 +88,17 @@ Route::namespace('App\Http\Controllers\API\Common')->group(function () {
             Route::post('permissions','permissions');
             Route::apiResource('permission',PermissionController::class)->only(['store','destroy','show', 'update']);
         });
+
+        //----------------------------Notification----------------------//
+        Route::controller(NotificationController::class)->group(function () {
+            Route::post('/notifications','index');
+            Route::apiResource('/notification', NotificationController::class)->only('store','destroy','show');
+            Route::get('/notification/{id}/read', 'read');
+            Route::get('/user-notification-read-all', 'userNotificationReadAll');
+            Route::get('/user-notification-delete', 'userNotificationDelete');
+            Route::post('/notification-check', 'notificationCheck');
+            Route::get('/unread-notification-count', 'unreadNotificationsCount');
+        });
        
 
     });
