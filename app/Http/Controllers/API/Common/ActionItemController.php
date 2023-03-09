@@ -26,10 +26,23 @@ class ActionItemController extends Controller
     public function actionItems(Request $request)
     {
         try {
+            $column = 'id';
+            $dir = 'Desc';
+            if(!empty($request->sort))
+            {
+                if(!empty($request->sort['column']))
+                {
+                    $column = $request->sort['column'];
+                }
+                if(!empty($request->sort['dir']))
+                {
+                    $dir = $request->sort['dir'];
+                }
+            }
             $user = getUser();
 
             if($user->role_id == 1){
-                $query = ActionItem::orderby('id','DESC')->with('meeting','documents');
+                $query = ActionItem::orderby($column,$dir)->with('meeting','documents');
             } else{
                 $query = ActionItem::where('owner_id',$user->id)->orderby('id','DESC')->with('meeting','documents');
             }

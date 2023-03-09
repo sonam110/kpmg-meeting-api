@@ -39,8 +39,21 @@ class MeetingController extends Controller
     {
         try {
             // return auth()->id();
+            $column = 'id';
+            $dir = 'Desc';
+            if(!empty($request->sort))
+            {
+                if(!empty($request->sort['column']))
+                {
+                    $column = $request->sort['column'];
+                }
+                if(!empty($request->sort['dir']))
+                {
+                    $dir = $request->sort['dir'];
+                }
+            }
             $user = getUser();
-            $query = Meeting::select('meetings.*')->orderby('meetings.id','DESC')
+            $query = Meeting::select('meetings.*')->orderby('meetings.'.$column,$dir)
             ->with('attendees.user:id,name,email','documents');
             if($user->role_id == 2){
                 $attendees = Attendee::where('user_id',$user->id)
