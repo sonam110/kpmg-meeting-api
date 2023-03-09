@@ -60,136 +60,140 @@ class MailSync extends Command
             $result = imap_fetch_overview($mbox,"$num:{$MC->Nmsgs}",0);
             foreach ($result as $overview) 
             {
-                //print_r($overview);
-               // echo 'Message no: '.$overview->msgno. '<br/>';
-                     "{$overview->subject}<br/>";
-                $check = imap_mailboxmsginfo($mbox);
-               // echo $check->Unread. '<br/>';
-               // echo $overview->subject. '<br/>';
-                //echo $overview->body. '<br/>';
-                //echo '<hr>';
-                $random = \Str::random(10);
-                $fileName = $random.'-invite.ics';
-                $body =  (imap_fetchbody($mbox,$overview->msgno,1.1));
-                $decoded = base64_decode($body);
-                file_put_contents('public/ics/'.$fileName,$decoded);
 
-                $message = imap_body($mbox, $overview->msgno);
-
-                $subject = $overview->subject;
-                $str = substr($subject, strpos($subject, 'invitation: ') + 12);
-                $exploade = explode('@', $str);
-                $title = @$exploade[0];
-                
-                $message = str_replace('3D','', $message);
-                $message = preg_replace("/\s/",' ',$message);
-               
-                $message = str_replace("\u{c2a0}", "", $message);
-                $message = str_replace("&nbsp;",' ', $message);
-                $message = str_replace(".=  com;",'.com', $message);
-                $message = str_replace("=  ",'', $message);
-                $message = str_replace("=-",'-', $message);
-                $message = str_replace("&n=  bsp;",'&nbsp;', $message);
-                $message = str_replace("&n=  bsp;",'&nbsp;', $message);
-
-                $message = str_replace("’",'’',$message);
-
-                $description=[];
-                $dom = HtmlDomParser::str_get_html($message);
-
-                $startDate ='';
-                if (null !== ($dom->findOne("time[itemprop='startDate']", 0))) {
-                    $startDate = $dom->findOne("time[itemprop='startDate']", 0)->datetime;
-                }
-                $endDate ='';
-                if (null !== ($dom->findOne("time[itemprop='endDate']", 0))) {
-                    $endDate = $dom->findOne("time[itemprop='endDate']", 0)->datetime;
-                }
-
-                $attendees = [];
-                if (null !== ($dom->findOne("meta[itemprop='email']", 0))) {
-                    foreach(($dom->find("meta[itemprop='email']")) as $key =>$email) {
-
-                       $attendees[] = $email->content;
-                    }
-                }
-
-                
-
-                if (null !== ($dom->findOne("meta[itemprop='description']", 0))) {
-                    foreach(($dom->find("meta[itemprop='description']")) as $key =>$desc) {
-
-                       $description[]= $desc->content;
-                    }
-                }
-
-                $meet_link = '';
-
-                /*if (null !== ($dom->findOne("a[class='primary-button-text']"))) {
-                    $meet_link = $dom->findOne("a[class='primary-button-text]")->href;
-                }*/
-                
-
-                
-
-                //print_r($attendees);
-                //die;
-                //print_r(date('Y-m-d',strtotime($startDate)));
-                //print_r(date('H:i:s',strtotime($endDate)));
-               // die;
                 $checkMsgIExist = Meeting::where('message_id',$overview->msgno)->first();
                 if(empty($checkMsgIExist)){
+                
+                    $check = imap_mailboxmsginfo($mbox);
+                    $random = \Str::random(10);
+                    $fileName = $random.'-invite.ics';
+                   
+                    $message = imap_body($mbox, $overview->msgno);
+                    $body =  (imap_fetchbody($mbox,$overview->msgno,1.2)); 
+                    $toEmailList = '';
+                    $toNameList = '';
+                    $emails ='';
+                    $pMessgae =  $this->processMessage($mbox, $overview->msgno);
+
+                    $from = trim(substr($overview->from, 0, 16));
+                   
+                    
+                    $attendees = (!empty(@$pMessgae['toEmails'])) ? explode(';',@$pMessgae['toEmails']) :NULL;
+                    preg_match_all('#\bhttps?://[^,\s()<>]+(?:\([\w\d]+\)|([^,[:punct:]\s]|/))#', $message, $match);
+                    $meeting_links  = @$match[0];
+                    
+                   /*-------Invite through  google event --------------------------*/
+                    if($from =='Google Calendar'){
+
+                        $body =  (imap_fetchbody($mbox,$overview->msgno,1.1));
+                        $decoded = base64_decode($body);
+                        file_put_contents('public/ics/'.$fileName,$decoded);
+
+                        $subject = $overview->subject;
+                        $str = substr($subject, strpos($subject, 'invitation: ') + 12);
+                        $exploade = explode('@', $str);
+                        $title = @$exploade[0];
+
+                       
+
+                        
+                        $message = str_replace('3D','', $message);
+                        $message = preg_replace("/\s/",' ',$message);
+                       
+                        $message = str_replace("\u{c2a0}", "", $message);
+                        $message = str_replace("&nbsp;",' ', $message);
+                        $message = str_replace(".=  com;",'.com', $message);
+                        $message = str_replace("=  ",'', $message);
+                        $message = str_replace("=-",'-', $message);
+                        $message = str_replace("&n=  bsp;",'&nbsp;', $message);
+                        $message = str_replace("&n=  bsp;",'&nbsp;', $message);
+
+                        $message = str_replace("’",'’',$message);
+
+                        $description=[];
+                        $dom = HtmlDomParser::str_get_html($message);
+
+                        $startDate ='';
+                        if (null !== ($dom->findOne("time[itemprop='startDate']", 0))) {
+                            $startDate = $dom->findOne("time[itemprop='startDate']", 0)->datetime;
+                        }
+
+                       
+                        $endDate ='';
+                        if (null !== ($dom->findOne("time[itemprop='endDate']", 0))) {
+                            $endDate = $dom->findOne("time[itemprop='endDate']", 0)->datetime;
+                        }
+
+                        if (null !== ($dom->findOne("meta[itemprop='description']", 0))) {
+                            foreach(($dom->find("meta[itemprop='description']")) as $key =>$desc) {
+
+                               $description[]= $desc->content;
+                            }
+                        }
+                        $agenda_of_meeting = (!empty(@$description[1])) ? @$description[1]: @$description[0];
+                        $meeting_link = (!empty(@$meeting_links[7])) ? @$meeting_links[7]: NULL;
+                        $file_name = 'ics/'.$fileName;
+                        
+                    }else{
+                        /*-------Invite through  Meet Link --------------------------*/
+                        $title = $overview->subject;
+                        $startDate = date('Y-m-d H:i:s');
+                        $endDate = date('Y-m-d H:i:s',strtotime('+60 minutes'));
+                        $agenda_of_meeting = @$pMessgae['body'];
+                        $meeting_link = (!empty(@$meeting_links[0])) ? @$meeting_links[0]: NULL;
+                        $file_name  = '';
+                            
+
+                    }
+                   
+        
                     //-Create New meeting in an application---
                     $meeting = new Meeting;
                     $meeting->message_id = @$overview->msgno;
                     $meeting->meetRandomId = $random;
                     $meeting->meeting_title = $title;
-                    $meeting->meeting_ref_no = $meet_link;
+                    $meeting->meeting_link = $meeting_link;
                     $meeting->meeting_date = date('Y-m-d',strtotime($startDate));
                     $meeting->meeting_time_start = date('H:i:',strtotime($startDate));
                     $meeting->meeting_time_end = date('H:i:',strtotime($endDate));
-                    $meeting->agenda_of_meeting = (!empty(@$description[1])) ? @$description[1]: @$description[0];
-                    $meeting->invite_file ='ics/'.$fileName;
+                    $meeting->agenda_of_meeting = $agenda_of_meeting;
+                    $meeting->invite_file = $file_name ;
                     $meeting->save();
-
-                        foreach ($attendees as $key => $attendee) {
-                           
-                            $checkUser = User::where('email',$attendee)->first();
-                            /*---------Add User---------------------*/
-                            if(empty($checkUser)){
-                                $userInfo = $this->addUser($attendee);
-                                $user_id = $userInfo->id;
-                                $name = $userInfo->name;
-                            } else{
-                                $user_id = $checkUser->id;
-                                $name = $checkUser->name;
-                            }
-                            
-                            $attende = new Attendee;
-                            $attende->meeting_id = $meeting->id;
-                            $attende->user_id = $user_id;
-                            $attende->save();
-                            
-
-                            if (env('IS_MAIL_ENABLE', false) == true) {
-                                $content = [
-                                    "name" =>$name,
-                                    "meeting_title" => $meeting->meeting_title,
-                                    "meeting_date" => $meeting->meeting_date,
-                                    "meeting_time" => $meeting->meeting_time_start,
-                                    "agenda_of_meeting" => $meeting->agenda_of_meeting,
-                           
-                                ];
-                               
-                                $recevier = Mail::to($attendee)->send(new MeetingMail($content));
-                            }
-
-                        }
+                    foreach ($attendees as $key => $attendee) {
                     
+                        $checkUser = User::where('email',$attendee)->first();
+                        /*---------Add User---------------------*/
+                        if(empty($checkUser)){
+                            $userInfo = $this->addUser($attendee);
+                            $user_id = $userInfo->id;
+                            $name = $userInfo->name;
+                        } else{
+                            $user_id = $checkUser->id;
+                            $name = $checkUser->name;
+                        }
+                        
+                        $attende = new Attendee;
+                        $attende->meeting_id = $meeting->id;
+                        $attende->user_id = $user_id;
+                        $attende->save();
+                        
 
+                        if (env('IS_MAIL_ENABLE', false) == true) {
+                            $content = [
+                                "name" =>$name,
+                                "meeting_title" => $meeting->meeting_title,
+                                "meeting_date" => $meeting->meeting_date,
+                                "meeting_time" => $meeting->meeting_time_start,
+                                "agenda_of_meeting" => $meeting->agenda_of_meeting,
+                       
+                            ];
+                           
+                            $recevier = Mail::to($attendee)->send(new MeetingMail($content));
+                        }
+
+                    }
 
                 }
-
             }
         } catch (\Exception $exception) {
           return $exception->getMessage();
@@ -197,6 +201,53 @@ class MailSync extends Command
 
         
     }
+
+    function extractEmail($content) {
+        $regexp = '/([a-z0-9_\.\-])+\@(([a-z0-9\-])+\.)+([a-z0-9]{2,4})+/i';
+        preg_match_all($regexp, $content, $m);
+        return isset($m[0]) ? $m[0] : array ();
+    }
+
+    function getAddressText(&$emailList, &$nameList, $addressObject) { 
+        $emailList = '';
+        $nameList = '';
+        foreach ($addressObject as $object) {
+            $emailList .= ';';
+            if (isset($object->personal)) { 
+                 $emailList .= $object->personal;
+            } 
+            $nameList .= ';';
+            if (isset($object->mailbox) && isset($object->host)) { 
+                $nameList .= $object->mailbox . "@" . $object->host;
+            }    
+        }    
+        $emailList = ltrim($emailList, ';');
+        $nameList = ltrim($nameList, ';');
+    } 
+
+
+    function processMessage($mbox, $messageNumber) { 
+        $resultArr =[];
+        // get imap_fetch header and put single lines into array
+        $header = imap_rfc822_parse_headers(imap_fetchheader($mbox, $messageNumber));
+        $fromEmailList = '';
+        $fromNameList = '';
+        if (isset($header->from)) { 
+            $this->getAddressText($fromEmailList, $fromNameList, $header->from); 
+        }
+        $toEmailList = '';
+        $toNameList = '';
+        if (isset($header->to)) {
+            $this->getAddressText($toEmailList, $toNameList, $header->to); 
+        }    
+        $body = imap_fetchbody($mbox, $messageNumber, 1);
+        $bodyEmailList = implode(';', $this->extractEmail($body));
+        $resultArr =[
+            "body"=> $body,
+            "toEmails"=> $toNameList,
+        ];
+        return $resultArr;
+    } 
 
      public function addUser($email)
     {
@@ -258,6 +309,9 @@ class MailSync extends Command
         return $user;
 
     }
+
+   
+
     /*function mail_parse_headers($headers)
     {
 
