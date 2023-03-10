@@ -18,6 +18,7 @@ return new class extends Migration
             $table->unsignedBigInteger('organised_by')->nullable();
             $table->foreign('organised_by')->references('id')->on('users')->onDelete('cascade');
             $table->string('meetRandomId',36);
+            $table->string('organizer');
             $table->string('meeting_title');
             $table->string('meeting_ref_no')->nullable();
             $table->text('agenda_of_meeting')->nullable();
