@@ -29,7 +29,7 @@ class UserController extends Controller
     public function users(Request $request)
     {
         try {
-            $query = User::where('role_id','!=','1');
+            $query = User::where('role_id','!=','1')->with('role:id,name,se_name');
             
             if(!empty($request->email))
             {
@@ -55,6 +55,11 @@ class UserController extends Controller
             elseif($request->status=='inactive')
             {
                 $query->where('status', 0);
+            }
+
+            if(!empty($request->role_id))
+            {
+                $query->where('role_id', $request->role_id);
             }
 
             if(!empty($request->per_page_record))

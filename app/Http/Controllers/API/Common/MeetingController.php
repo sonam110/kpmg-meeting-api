@@ -54,7 +54,7 @@ class MeetingController extends Controller
             }
             $user = getUser();
             $query = Meeting::select('meetings.*')->orderby('meetings.'.$column,$dir)
-            ->with('attendees.user:id,name,email','documents');
+            ->with('attendees.user:id,name,email','documents','organiser:id,name,email');
             if($user->role_id == 2){
                 $attendees = Attendee::where('user_id',$user->id)
                 ->pluck('meeting_id')
@@ -159,6 +159,7 @@ class MeetingController extends Controller
     {
         $validation = \Validator::make($request->all(), [
             'meeting_title'      => 'required',
+            // 'meeting_ref_no'   => 'required|unique:meetings',
             'meeting_date'   => 'required',
             'meeting_time_start'   => 'required',
             'meeting_time_end'   => 'required',
@@ -177,12 +178,13 @@ class MeetingController extends Controller
             $meeting = new Meeting;
             $meeting->meetRandomId = generateRandomNumber(14);
             $meeting->meeting_title = $request->meeting_title;
-            $meeting->meeting_ref_no = $request->meeting_ref_no;
+            $meeting->meeting_ref_no = generateRandomNumber(14);
             $meeting->agenda_of_meeting  = $request->agenda_of_meeting;
             $meeting->meeting_date = $request->meeting_date;
             $meeting->meeting_time_start = $request->meeting_time_start;
             $meeting->meeting_time_end = $request->meeting_time_end;
             $meeting->meeting_link = $request->meeting_link;
+            $meeting->organised_by = auth()->id();
             $meeting->is_repeat = ($request->is_repeat== true) ? 1:0;
             $meeting->status = $request->status ? $request->status : 1;
             $meeting->save();
@@ -207,18 +209,18 @@ class MeetingController extends Controller
                     $attende->save();
                     
 
-                    // if (env('IS_MAIL_ENABLE', false) == true) {
-                    //     $content = [
-                    //         "name" =>$name,
-                    //         "meeting_title" => $request->meeting_title,
-                    //         "meeting_date" => $request->meeting_date,
-                    //         "meeting_time_start" => $request->meeting_time_start,
-                    //         "meeting_time_end" => $request->meeting_time_end,
-                    //         "agenda_of_meeting" => $request->agenda_of_meeting,
+                    if (env('IS_MAIL_ENABLE', false) == true) {
+                        $content = [
+                            "name" =>$name,
+                            "meeting_title" => $request->meeting_title,
+                            "meeting_date" => $request->meeting_date,
+                            "meeting_time_start" => $request->meeting_time_start,
+                            "meeting_time_end" => $request->meeting_time_end,
+                            "agenda_of_meeting" => $request->agenda_of_meeting,
                    
-                    //     ];
-                    //     $recevier = Mail::to($attendee['email'])->send(new MeetingMail($content));
-                    // }
+                        ];
+                        $recevier = Mail::to($attendee['email'])->send(new MeetingMail($content));
+                    }
 
                     $notification = new Notification;
                     $notification->user_id              = $user_id;
@@ -328,7 +330,7 @@ class MeetingController extends Controller
     {
         try {
             $meeting = Meeting::select('*')
-                ->with('attendees.user:id,name,email','documents','notes')
+                ->with('attendees.user:id,name,email','documents','notes','organiser:id,name,email')
                 ->find($id);
             if($meeting)
             {
@@ -363,6 +365,7 @@ class MeetingController extends Controller
     {
         $validation = \Validator::make($request->all(), [
             'meeting_title'      => 'required',
+            // 'meeting_ref_no'   => 'required|unique:meetings,meeting_ref_no,'.$id,
             'meeting_date'   => 'required',
             'meeting_time_start'   => 'required',
             'meeting_time_end'   => 'required',
@@ -382,12 +385,13 @@ class MeetingController extends Controller
                 return response()->json(prepareResult(true, [],'No meeting found', config('httpcodes.not_found')));
             }
             $meeting->meeting_title = $request->meeting_title;
-            $meeting->meeting_ref_no = $request->meeting_ref_no;
+            // $meeting->meeting_ref_no = $request->meeting_ref_no;
             $meeting->agenda_of_meeting  = $request->agenda_of_meeting;
             $meeting->meeting_date = $request->meeting_date;
             $meeting->meeting_time_start = $request->meeting_time_start;
             $meeting->meeting_time_end = $request->meeting_time_end;
             $meeting->meeting_link = $request->meeting_link;
+            $meeting->organised_by = auth()->id();
             $meeting->is_repeat = ($request->is_repeat== true) ? 1:0;
             $meeting->status = $request->status ? $request->status : 1;
             $meeting->save();
@@ -411,9 +415,10 @@ class MeetingController extends Controller
                 }
             }
              /*------------Documents---------------------*/
+
+            $deleteOldDoc = MeetingDocument::where('meeting_id',$meeting->id)->where('type','meeting')->delete();
             $documents = $request->documents;
             if(is_array(@$documents) && count(@$documents) >0 ){
-                $deleteOldDoc = MeetingDocument::where('meeting_id',$meeting->id)->where('type','meeting')->delete();
                 foreach ($documents as $key => $document) {
                     $doument = new MeetingDocument;
                     $doument->meeting_id = $meeting->id;

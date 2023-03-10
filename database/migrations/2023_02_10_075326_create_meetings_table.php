@@ -15,6 +15,8 @@ return new class extends Migration
     {
         Schema::create('meetings', function (Blueprint $table) {
             $table->id();
+            $table->unsignedBigInteger('organised_by')->nullable();
+            $table->foreign('organised_by')->references('id')->on('users')->onDelete('cascade');
             $table->string('meetRandomId',36);
             $table->string('meeting_title');
             $table->string('meeting_ref_no')->nullable();
