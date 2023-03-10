@@ -16,6 +16,7 @@ return new class extends Migration
         Schema::create('meetings', function (Blueprint $table) {
             $table->id();
             $table->string('meetRandomId',36);
+            $table->string('organizer');
             $table->string('meeting_title');
             $table->string('meeting_ref_no')->nullable();
             $table->text('agenda_of_meeting')->nullable();

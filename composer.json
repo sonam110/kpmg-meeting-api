@@ -9,6 +9,7 @@
         "barryvdh/laravel-dompdf": "^2.0",
         "guzzlehttp/guzzle": "^7.2",
         "intervention/image": "^2.7",
+        "johngrogg/ics-parser": "^3.2",
         "laravel/framework": "^9.19",
         "laravel/passport": "^11.5",
         "laravel/sanctum": "^3.0",

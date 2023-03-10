@@ -58,36 +58,52 @@ class MailSync extends Command
             $msg = array();
             // Fetch an overview for all messages in INBOX
             $result = imap_fetch_overview($mbox,"$num:{$MC->Nmsgs}",0);
+            $check = imap_mailboxmsginfo($mbox);
             foreach ($result as $overview) 
             {
 
                 $checkMsgIExist = Meeting::where('message_id',$overview->msgno)->first();
                 if(empty($checkMsgIExist)){
                 
-                    $check = imap_mailboxmsginfo($mbox);
+                   
                     $random = \Str::random(10);
                     $fileName = $random.'-invite.ics';
+                    $body =  (imap_fetchbody($mbox,$overview->msgno,1.1));
+                    $decoded = base64_decode($body);
+                    file_put_contents('public/ics/'.$fileName,$decoded);
                    
                     $message = imap_body($mbox, $overview->msgno);
-                    $body =  (imap_fetchbody($mbox,$overview->msgno,1.2)); 
+                    //$body =  (imap_fetchbody($mbox,$overview->msgno,1.2)); 
                     $toEmailList = '';
                     $toNameList = '';
                     $emails ='';
                     $pMessgae =  $this->processMessage($mbox, $overview->msgno);
 
+                    $bmessage = htmlentities(quoted_printable_decode(@$pMessgae['body']));
+
                     $from = trim(substr($overview->from, 0, 16));
+
+                    $str = str_replace(PHP_EOL, '', $pMessgae['body']);
+
+                   
                    
                     
                     $attendees = (!empty(@$pMessgae['toEmails'])) ? explode(';',@$pMessgae['toEmails']) :NULL;
                     preg_match_all('#\bhttps?://[^,\s()<>]+(?:\([\w\d]+\)|([^,[:punct:]\s]|/))#', $message, $match);
                     $meeting_links  = @$match[0];
-                    
+
+                   
+
+                   $file = 'public/ics/'.$fileName.'';
+                   $html = HtmlDomParser::file_get_html($file);
+
+                    print_r($html);
+                    die;
+
+                   $dom = HtmlDomParser::str_get_html($message);
+
                    /*-------Invite through  google event --------------------------*/
                     if($from =='Google Calendar'){
-
-                        $body =  (imap_fetchbody($mbox,$overview->msgno,1.1));
-                        $decoded = base64_decode($body);
-                        file_put_contents('public/ics/'.$fileName,$decoded);
 
                         $subject = $overview->subject;
                         $str = substr($subject, strpos($subject, 'invitation: ') + 12);
@@ -95,7 +111,6 @@ class MailSync extends Command
                         $title = @$exploade[0];
 
                        
-
                         
                         $message = str_replace('3D','', $message);
                         $message = preg_replace("/\s/",' ',$message);
@@ -111,7 +126,7 @@ class MailSync extends Command
                         $message = str_replace("’",'’',$message);
 
                         $description=[];
-                        $dom = HtmlDomParser::str_get_html($message);
+                       
 
                         $startDate ='';
                         if (null !== ($dom->findOne("time[itemprop='startDate']", 0))) {
@@ -134,12 +149,19 @@ class MailSync extends Command
                         $meeting_link = (!empty(@$meeting_links[7])) ? @$meeting_links[7]: NULL;
                         $file_name = 'ics/'.$fileName;
                         
+                    }elseif(str_contains($bmessage, 'Microsoft Teams meeting')) { 
+                        $title = $overview->subject;
+                        $startDate = date('Y-m-d H:i:s');
+                        $endDate = date('Y-m-d H:i:s',strtotime('+60 minutes'));
+                        $agenda_of_meeting = $bmessage;
+                        $meeting_link = (!empty(@$meeting_links[0])) ? @$meeting_links[0]: NULL;
+                        $file_name  = '';
                     }else{
                         /*-------Invite through  Meet Link --------------------------*/
                         $title = $overview->subject;
                         $startDate = date('Y-m-d H:i:s');
                         $endDate = date('Y-m-d H:i:s',strtotime('+60 minutes'));
-                        $agenda_of_meeting = @$pMessgae['body'];
+                        $agenda_of_meeting = $bmessage;
                         $meeting_link = (!empty(@$meeting_links[0])) ? @$meeting_links[0]: NULL;
                         $file_name  = '';
                             
