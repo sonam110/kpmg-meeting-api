@@ -5,6 +5,7 @@ namespace App\Http\Controllers\API\Common;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\MeetingDocument;
+use App\Models\Notification;
 use App\Models\MeetingNote;
 use Validator;
 use Auth;
@@ -125,6 +126,17 @@ class NotesController extends Controller
                 }
 
             }
+
+            $notification = new Notification;
+            $notification->user_id              = $user_id;
+            $notification->sender_id            = auth()->id();
+            $notification->type                 = 'note';
+            $notification->status_code          = 'success';
+            $notification->title                = 'A New Meeting Note Has Been Created';
+            $notification->message              = 'A new note on meeting '.$meetingNote->meeting->meeting_title.' has been added. Please click here for the details.';
+            $notification->read_status          = false;
+            $notification->data_id              = $meetingNote->id;
+            $notification->save();
             
             DB::commit();
             return response()->json(prepareResult(false, $meetingNote, trans('translate.created')),config('httpcodes.created'));
