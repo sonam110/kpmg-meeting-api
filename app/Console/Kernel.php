@@ -15,20 +15,20 @@ class Kernel extends ConsoleKernel
      */
 
     protected $commands = [
-        Commands\ScheduleMeetingReminder::class,
-        Commands\ActionItemReminder::class,
+        //Commands\ScheduleMeetingReminder::class,
+        //Commands\ActionItemReminder::class,
         Commands\IcalMeetSync::class,
     ];
 
     protected function schedule(Schedule $schedule)
     {
-        $schedule->command('send:meeting-reminder')
+        /*$schedule->command('send:meeting-reminder')
         ->everyMinute()
         ->timezone(env('TIME_ZONE', 'Asia/Calcutta'));
 
         $schedule->command('send:action-items-reminder')
         ->everyMinute()
-        ->timezone(env('TIME_ZONE', 'Asia/Calcutta'));
+        ->timezone(env('TIME_ZONE', 'Asia/Calcutta'));*/
 
         $schedule->command('ical-mail:sync')
         ->everyMinute()
