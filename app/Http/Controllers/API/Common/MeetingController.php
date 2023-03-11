@@ -55,7 +55,7 @@ class MeetingController extends Controller
             $user = getUser();
             $query = Meeting::select('meetings.*')->orderby('meetings.'.$column,$dir)
             ->with('attendees.user:id,name,email','documents','organiser:id,name,email');
-            if($user->role_id == 2){
+            if($user->role_id != '1'){
                 $attendees = Attendee::where('user_id',$user->id)
                 ->pluck('meeting_id')
                 ->toArray();
