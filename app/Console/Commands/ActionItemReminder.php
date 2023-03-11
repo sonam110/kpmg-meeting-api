@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
 use App\Models\Meeting;
+use App\Models\ActionItem;
 use App\Models\ActionItemController;
 use Mail;
 use App\Mail\scheduleMeetingMail;
