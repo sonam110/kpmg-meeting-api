@@ -19,7 +19,7 @@ class RoleSeeder extends Seeder
     public function run()
     {
         /*------------Default Role-----------------------------------*/
-        \DB::table('roles')->truncate();
+        \DB::table('roles')->delete();
         $role1 = Role::create([
             'id' => '1',
             'name' => 'Admin',

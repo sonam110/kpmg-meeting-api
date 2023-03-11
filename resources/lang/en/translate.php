@@ -682,4 +682,8 @@ return [
     "total-mail-send" => "Total Mail Send",
     "total-sms-send" => "Total SMS Send",
     "booking-mail" => "Booking Person Email",
+    "document_dublicacy"=>"Dublicate Document Uploaded!",
+    "read"=>"Notification Read!",
+    "read_all"=>"Notification Read All!",
+    "fetched_count"=>"Fetched Count!",
 ];

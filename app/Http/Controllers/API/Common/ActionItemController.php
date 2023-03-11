@@ -158,14 +158,14 @@ class ActionItemController extends Controller
             $documents = $request->documents;
             if(is_array(@$documents) && count(@$documents) >0 ){
                 foreach ($documents as $key => $document) {
-                    $doument = new MeetingDocument;
-                    $doument->action_id = $actionItem->id;
-                    $doument->type = 'action';
-                    $doument->document = $document['file'];
-                    $doument->file_extension = $document['file_extension'];
-                    $doument->file_name = $document['file_name'];
-                    $doument->uploading_file_name = $document['uploading_file_name'];
-                    $doument->save();
+                    $doc = new MeetingDocument;
+                    $doc->action_id = $actionItem->id;
+                    $doc->type = 'action';
+                    $doc->document = $document['file'];
+                    $doc->file_extension = $document['file_extension'];
+                    $doc->file_name = $document['file_name'];
+                    $doc->uploading_file_name = $document['uploading_file_name'];
+                    $doc->save();
                 }
 
             }
@@ -173,6 +173,7 @@ class ActionItemController extends Controller
             $notification = new Notification;
             $notification->user_id              = $request->owner_id;
             $notification->sender_id            = auth()->id();
+            $notification->type                 = 'action';
             $notification->status_code          = 'success';
             $notification->title                = 'New action Item';
             $notification->message              = '';
@@ -264,17 +265,17 @@ class ActionItemController extends Controller
 
              /*------------Documents---------------------*/
             $documents = $request->documents;
+            $deleteOldDoc = MeetingDocument::where('action_id',$actionItem->id)->where('type','action')->delete();
             if(is_array(@$documents) && count(@$documents) >0 ){
-                $deleteOldDoc = MeetingDocument::where('action_id',$actionItem->id)->where('type','action')->delete();
                 foreach ($documents as $key => $document) {
-                    $doument = new MeetingDocument;
-                    $doument->action_id = $actionItem->id;
-                    $doument->type = 'action';
-                    $doument->document = $document['file'];
-                    $doument->file_extension = $document['file_extension'];
-                    $doument->file_name = $document['file_name'];
-                    $doument->uploading_file_name = $document['uploading_file_name'];
-                    $doument->save();
+                    $doc = new MeetingDocument;
+                    $doc->action_id = $actionItem->id;
+                    $doc->type = 'action';
+                    $doc->document = $document['file'];
+                    $doc->file_extension = $document['file_extension'];
+                    $doc->file_name = $document['file_name'];
+                    $doc->uploading_file_name = $document['uploading_file_name'];
+                    $doc->save();
                 }
 
             }

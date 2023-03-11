@@ -28,6 +28,10 @@ class NotificationController extends Controller
             {
                 $query->where('read_status',$request->read_status);
             }
+            if($request->type)
+            {
+                $query->where('type',$request->type);
+            }
             if(!empty($request->perPage))
             {
                 $perPage = $request->perPage;
@@ -62,13 +66,19 @@ class NotificationController extends Controller
 
     public function show(Notification $notification)
     {
-        return response(prepareResult(false, $userinfo, trans('translate.fetched_records')), config('httpcodes.success'));
+        return response(prepareResult(false, $userinfo, trans('translate.fetched_detail')), config('httpcodes.success'));
     }
 
     public function destroy(Notification $notification)
     {
-        $notification->delete();
-        return prepareResult(true,getLangByLabelGroups('Notification','message_delete'), [],config('httpcodes.success'));
+        try
+        {
+            $notification->delete();
+            return response(prepareResult(false, [], trans('translate.deleted')), config('httpcodes.success'));
+        } catch (\Throwable $e) {
+            \Log::error($e);
+            return response()->json(prepareResult(true, $e->getMessage(), trans('translate.something_went_wrong')), config('httpcodes.internal_server_error'));
+        }
     }
 
     public function read($id)
@@ -77,13 +87,10 @@ class NotificationController extends Controller
         {
             $notification = Notification::find($id);
             $notification->update(['read_status' => true]);
-            return prepareResult(true,getLangByLabelGroups('Notification','message_read'), $notification,config('httpcodes.success'));
-        }
-        catch (\Throwable $exception)
-        {
-            DB::rollback();
-            \Log::error($exception);
-            return prepareResult(false, $exception->getMessage(),[], config('httpcodes.internal_server_error'));
+            return response(prepareResult(false, $notification, trans('translate.read')), config('httpcodes.success'));
+        } catch (\Throwable $e) {
+            \Log::error($e);
+            return response()->json(prepareResult(true, $e->getMessage(), trans('translate.something_went_wrong')), config('httpcodes.internal_server_error'));
         }
     }
 
@@ -92,13 +99,10 @@ class NotificationController extends Controller
         try
         {
             Notification::where('user_id', Auth::id())->update(['read_status' => true]);
-            return prepareResult(true,getLangByLabelGroups('Notification','message_read'), [],config('httpcodes.success'));
-        }
-        catch (\Throwable $exception)
-        {
-            DB::rollback();
-            \Log::error($exception);
-            return prepareResult(false, $exception->getMessage(),[], config('httpcodes.internal_server_error'));
+            return response(prepareResult(false, [], trans('translate.all_read')), config('httpcodes.success'));
+        } catch (\Throwable $e) {
+            \Log::error($e);
+            return response()->json(prepareResult(true, $e->getMessage(), trans('translate.something_went_wrong')), config('httpcodes.internal_server_error'));
         }
     }
 
@@ -107,13 +111,10 @@ class NotificationController extends Controller
         try
         {
             Notification::where('user_id', Auth::id())->delete();
-            return prepareResult(true,getLangByLabelGroups('Notification','message_delete'), [],config('httpcodes.success'));
-        }
-        catch (\Throwable $exception)
-        {
-            DB::rollback();
-            \Log::error($exception);
-            return prepareResult(false, $exception->getMessage(),[], config('httpcodes.internal_server_error'));
+            return response(prepareResult(false, [], trans('translate.deleted')), config('httpcodes.success'));
+        } catch (\Throwable $e) {
+            \Log::error($e);
+            return response()->json(prepareResult(true, $e->getMessage(), trans('translate.something_went_wrong')), config('httpcodes.internal_server_error'));
         }
     }
 
@@ -123,13 +124,10 @@ class NotificationController extends Controller
         {
             
             $count = Notification::where('user_id',Auth::id())->where('read_status',0)->count();
-            return prepareResult(true,getLangByLabelGroups('Notification','message_count'), $count,config('httpcodes.success'));
-        }
-        catch (\Throwable $exception)
-        {
-            DB::rollback();
-            \Log::error($exception);
-            return prepareResult(false, $exception->getMessage(),[], config('httpcodes.internal_server_error'));
+            return response(prepareResult(false, $query, trans('translate.fetched_count')), config('httpcodes.success'));
+        } catch (\Throwable $e) {
+            \Log::error($e);
+            return response()->json(prepareResult(true, $e->getMessage(), trans('translate.something_went_wrong')), config('httpcodes.internal_server_error'));
         }
     }
 

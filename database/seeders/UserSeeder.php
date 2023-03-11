@@ -20,9 +20,7 @@ class UserSeeder extends Seeder
      */
     public function run()
     {
-        
-
-        Module::truncate();
+        \DB::table(env('KPMG_MASTER_DB_DATABASE').'.modules')->delete();
         $module1 = Module::create([
             'id' => '1',
             'name' => 'MEETING APP',
