@@ -225,6 +225,7 @@ class MeetingController extends Controller
                     $notification = new Notification;
                     $notification->user_id              = $user_id;
                     $notification->sender_id            = auth()->id();
+                    $notification->type                 = 'meeting';
                     $notification->status_code          = 'success';
                     $notification->title                = 'New Meeting Invitation';
                     $notification->message              = 'New Meting Invitation for Meeting '.$meeting->meeting_title.' which will be held on '.$meeting->meeting_date.' between '.$meeting->meeting_time_start.'-'.$meeting->meeting_time_end.'.';
@@ -239,14 +240,14 @@ class MeetingController extends Controller
             $documents = $request->documents;
             if(is_array(@$documents) && count(@$documents) >0 ){
                 foreach ($documents as $key => $document) {
-                    $doument = new MeetingDocument;
-                    $doument->meeting_id = $meeting->id;
-                    $doument->type = 'meeting';
-                    $doument->document = $document['file'];
-                    $doument->file_extension = $document['file_extension'];
-                    $doument->file_name = $document['file_name'];
-                    $doument->uploading_file_name = $document['uploading_file_name'];
-                    $doument->save();
+                    $doc = new MeetingDocument;
+                    $doc->meeting_id = $meeting->id;
+                    $doc->type = 'meeting';
+                    $doc->document = $document['file'];
+                    $doc->file_extension = $document['file_extension'];
+                    $doc->file_name = $document['file_name'];
+                    $doc->uploading_file_name = $document['uploading_file_name'];
+                    $doc->save();
                 }
 
             }
@@ -420,14 +421,14 @@ class MeetingController extends Controller
             $documents = $request->documents;
             if(is_array(@$documents) && count(@$documents) >0 ){
                 foreach ($documents as $key => $document) {
-                    $doument = new MeetingDocument;
-                    $doument->meeting_id = $meeting->id;
-                    $doument->type = 'meeting';
-                    $doument->document = $document['file'];
-                    $doument->file_extension = $document['file_extension'];
-                    $doument->file_name = $document['file_name'];
-                    $doument->uploading_file_name = $document['uploading_file_name'];
-                    $doument->save();
+                    $doc = new MeetingDocument;
+                    $doc->meeting_id = $meeting->id;
+                    $doc->type = 'meeting';
+                    $doc->document = $document['file'];
+                    $doc->file_extension = $document['file_extension'];
+                    $doc->file_name = $document['file_name'];
+                    $doc->uploading_file_name = $document['uploading_file_name'];
+                    $doc->save();
                 }
 
             }

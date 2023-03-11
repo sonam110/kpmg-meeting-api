@@ -102,14 +102,26 @@ class NotesController extends Controller
             $documents = $request->documents;
             if(is_array(@$documents) && count(@$documents) >0 ){
                 foreach ($documents as $key => $document) {
-                    $doument = new MeetingDocument;
-                    $doument->note_id = $meetingNote->id;
-                    $doument->type = 'note';
-                    $doument->document = $document['file'];
-                    $doument->file_extension = $document['file_extension'];
-                    $doument->file_name = $document['file_name'];
-                    $doument->uploading_file_name = $document['uploading_file_name'];
-                    $doument->save();
+                    $meeting_id = $request->meeting_id;
+                    $notes_id = MeetingNote::where('meeting_id',$meeting_id)->pluck('id')->toArray();
+                    $checkDoc = MeetingDocument::where('uploading_file_name',$document['uploading_file_name'])
+                    ->where(function($q) use ($meeting_id,$notes_id) {
+                        $q->where('meeting_id',$meeting_id)
+                        ->orWhereIn('note_id', $notes_id);
+                    })
+                    ->count();
+                    if($checkDoc > 0)
+                    {
+                        return response()->json(prepareResult(true, [], trans('translate.document_dublicacy')), config('httpcodes.bad_request'));
+                    }
+                    $doc = new MeetingDocument;
+                    $doc->note_id = $meetingNote->id;
+                    $doc->type = 'note';
+                    $doc->document = $document['file'];
+                    $doc->file_extension = $document['file_extension'];
+                    $doc->file_name = $document['file_name'];
+                    $doc->uploading_file_name = $document['uploading_file_name'];
+                    $doc->save();
                 }
 
             }
@@ -194,17 +206,29 @@ class NotesController extends Controller
 
              /*------------Documents---------------------*/
             $documents = $request->documents;
+            $deleteOldDoc = MeetingDocument::where('note_id',$meetingNote->id)->where('type','note')->delete();
             if(is_array(@$documents) && count(@$documents) >0 ){
-                $deleteOldDoc = MeetingDocument::where('note_id',$meetingNote->id)->where('type','note')->delete();
+                $meeting_id = $request->meeting_id;
+                $notes_id = MeetingNote::where('meeting_id',$meeting_id)->pluck('id')->toArray();
+                $checkDoc = MeetingDocument::where('uploading_file_name',$document['uploading_file_name'])
+                ->where(function($q) use ($meeting_id,$notes_id) {
+                    $q->where('meeting_id',$meeting_id)
+                    ->orWhereIn('note_id', $notes_id);
+                })
+                ->count();
+                if($checkDoc > 0)
+                {
+                    return response()->json(prepareResult(true, [], trans('translate.document_dublicacy')), config('httpcodes.bad_request'));
+                }
                 foreach ($documents as $key => $document) {
-                    $doument = new MeetingDocument;
-                    $doument->note_id = $meetingNote->id;
-                    $doument->type = 'note';
-                    $doument->document = $document['file'];
-                    $doument->file_extension = $document['file_extension'];
-                    $doument->file_name = $document['file_name'];
-                    $doument->uploading_file_name = $document['uploading_file_name'];
-                    $doument->save();
+                    $doc = new MeetingDocument;
+                    $doc->note_id = $meetingNote->id;
+                    $doc->type = 'note';
+                    $doc->document = $document['file'];
+                    $doc->file_extension = $document['file_extension'];
+                    $doc->file_name = $document['file_name'];
+                    $doc->uploading_file_name = $document['uploading_file_name'];
+                    $doc->save();
                 }
 
             }
