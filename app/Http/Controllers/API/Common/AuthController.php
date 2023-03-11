@@ -25,7 +25,7 @@ class AuthController extends Controller
         ]);
 
         if ($validation->fails()) {
-            return response()->json(prepareResult(true, $validation->messages(), trans('translate.validation_failed')), config('httpcodes.bad_request'));
+            return response()->json(prepareResult(true, $validation->messages(), $validation->messages()->first()), config('httpcodes.bad_request'));
         }
 
         try {
@@ -82,7 +82,7 @@ class AuthController extends Controller
         ]);
 
         if ($validation->fails()) {
-            return response()->json(prepareResult(true, $validation->messages(), trans('translate.validation_failed')), config('httpcodes.bad_request'));
+            return response()->json(prepareResult(true, $validation->messages(), $validation->messages()->first()), config('httpcodes.bad_request'));
         }
 
         try {
@@ -131,7 +131,7 @@ class AuthController extends Controller
         ]);
 
         if ($validation->fails()) {
-            return response()->json(prepareResult(true, $validation->messages(), trans('translate.validation_failed')), config('httpcodes.bad_request'));
+            return response()->json(prepareResult(true, $validation->messages(), $validation->messages()->first()), config('httpcodes.bad_request'));
         }
 
         try {
@@ -181,7 +181,7 @@ class AuthController extends Controller
         ]);
 
         if ($validation->fails()) {
-            return response()->json(prepareResult(true, $validation->messages(), trans('translate.validation_failed')), config('httpcodes.bad_request'));
+            return response()->json(prepareResult(true, $validation->messages(), $validation->messages()->first()), config('httpcodes.bad_request'));
         }
 
         try {

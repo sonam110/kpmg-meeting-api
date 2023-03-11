@@ -74,7 +74,7 @@ class RoleController extends Controller
             'permissions' => 'required'
         ]);
         if ($validator->fails()) {
-            return response(prepareResult(true, $validator->messages(), trans('translate.validation_failed')), config('httpcodes.bad_request'));
+            return response(prepareResult(true, $validator->messages(), $validator->messages()->first(), config('httpcodes.bad_request'));
         }
         
         DB::beginTransaction();
@@ -122,7 +122,7 @@ class RoleController extends Controller
             'permissions' => 'required'
         ]);
         if ($validator->fails()) {
-             return response(prepareResult(true, $validator->messages(), trans('translate.validation_failed')), config('httpcodes.bad_request'));
+             return response(prepareResult(true, $validator->messages(), $validator->messages()->first(), config('httpcodes.bad_request'));
         }
 
         DB::beginTransaction();

@@ -76,7 +76,7 @@ class PermissionController extends Controller
             'group_name'=> 'required'
         ]);
         if ($validation->fails()) {
-            return response(prepareResult(true, $validation->messages(), trans('translate.validation_failed')), config('httpcodes.bad_request'));
+            return response(prepareResult(true, $validation->messages(), $validation->messages()->first()), config('httpcodes.bad_request'));
         }
 
         DB::beginTransaction();
@@ -133,7 +133,7 @@ class PermissionController extends Controller
         ]);
 
         if ($validation->fails()) {
-            return response(prepareResult(true, $validation->messages(), trans('translate.validation_failed')), config('httpcodes.bad_request'));
+            return response(prepareResult(true, $validation->messages(), $validation->messages()->first()), config('httpcodes.bad_request'));
         }
 
         DB::beginTransaction();
