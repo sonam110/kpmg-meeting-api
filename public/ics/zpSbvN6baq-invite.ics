@@ -1,0 +1,72 @@
+BEGIN:VCALENDAR
+METHOD:REQUEST
+PRODID:Microsoft Exchange Server 2010
+VERSION:2.0
+BEGIN:VTIMEZONE
+TZID:India Standard Time
+BEGIN:STANDARD
+DTSTART:16010101T000000
+TZOFFSETFROM:+0530
+TZOFFSETTO:+0530
+END:STANDARD
+BEGIN:DAYLIGHT
+DTSTART:16010101T000000
+TZOFFSETFROM:+0530
+TZOFFSETTO:+0530
+END:DAYLIGHT
+END:VTIMEZONE
+BEGIN:VEVENT
+ORGANIZER;CN=Sonam Patel:mailto:outlook_F677C341276B2B70@outlook.com
+ATTENDEE;ROLE=REQ-PARTICIPANT;PARTSTAT=NEEDS-ACTION;RSVP=TRUE;CN=Ashok Sahu
+ :mailto:erashok23@outlook.com
+DESCRIPTION;LANGUAGE=en-US:Outlook works around the clock to help protect y
+ our privacy and keep your inbox free of clutter.\n\n\n\n__________________
+ ______________________________________________________________\nMicrosoft 
+ Teams meeting\nJoin on your computer\, mobile app or room device\nClick he
+ re to join the meeting<https://teams.live.com/meet/9563714284292>\nLearn m
+ ore<https://aka.ms/JoinTeamsMeeting> | Meeting options<https://teams.live.
+ com/meetingOptions/meetings/9563714284292/view?localeCode=en-GB>\n________
+ ________________________________________________________________________\n
+ \nReplies and calendar responses will not be sent to the organizer\n
+UID:040000008200E00074C5B7101A82E0080000000049CA3C6A4953D901000000000000000
+ 0100000006041FCAB19167C4BA8BD75B4143E1236
+SUMMARY;LANGUAGE=en-US:New Meet
+DTSTART;TZID=India Standard Time:20230310T190000
+DTEND;TZID=India Standard Time:20230310T193000
+CLASS:PUBLIC
+PRIORITY:5
+DTSTAMP:20230310T121117Z
+TRANSP:OPAQUE
+STATUS:CONFIRMED
+SEQUENCE:0
+LOCATION;LANGUAGE=en-US:Microsoft Teams Meeting
+X-MICROSOFT-CDO-APPT-SEQUENCE:0
+X-MICROSOFT-CDO-OWNERAPPTID:2121488201
+X-MICROSOFT-CDO-BUSYSTATUS:TENTATIVE
+X-MICROSOFT-CDO-INTENDEDSTATUS:BUSY
+X-MICROSOFT-CDO-ALLDAYEVENT:FALSE
+X-MICROSOFT-CDO-IMPORTANCE:1
+X-MICROSOFT-CDO-INSTTYPE:0
+X-MICROSOFT-ONLINEMEETINGINFORMATION:{"OnlineMeetingChannelId":null\,"Onlin
+ eMeetingProvider":3}
+X-MICROSOFT-SKYPETEAMSMEETINGURL:https://teams.live.com/meet/9563714284292
+X-MICROSOFT-SCHEDULINGSERVICEUPDATEURL:https://api.scheduler.teams.microsof
+ t.com/teamsforlife/9563714284292
+X-MICROSOFT-SKYPETEAMSPROPERTIES:{"cid":"19:meeting_MWIxOWMxOTEtYjA2NC00NTB
+ lLWE1OTItNjYyYzM5OTdlYTcx@thread.v2"\,"rid":0\,"mid":0\,"uid":null\,"priva
+ te":true\,"type":0}
+X-MICROSOFT-DONOTFORWARDMEETING:FALSE
+X-MICROSOFT-DISALLOW-COUNTER:FALSE
+X-MICROSOFT-LOCATIONDISPLAYNAME:Microsoft Teams Meeting
+X-MICROSOFT-LOCATIONSOURCE:None
+X-MICROSOFT-LOCATIONS:[{"DisplayName":"Microsoft Teams Meeting"\,"LocationA
+ nnotation":""\,"LocationUri":""\,"LocationStreet":""\,"LocationCity":""\,"
+ LocationState":""\,"LocationCountry":""\,"LocationPostalCode":""\,"Locatio
+ nFullAddress":""}]
+BEGIN:VALARM
+DESCRIPTION:REMINDER
+TRIGGER;RELATED=START:-PT15M
+ACTION:DISPLAY
+END:VALARM
+END:VEVENT
+END:VCALENDAR

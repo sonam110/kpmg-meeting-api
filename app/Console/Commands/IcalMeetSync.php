@@ -102,12 +102,24 @@ class IcalMeetSync extends Command
                            
                             $attendees = explode(",", @$event->attendee);
                             $organizer = explode(":", @$event->organizer);
+                            if(!empty(@$organizer[1])){
+                                $organizerExist = User::where("email",@$organizer[1])->first();
+                                if (empty($organizerExist)) {
+                                    $userInfo = $this->addUser(@$organizer[1]);
+                                    $user_id = $userInfo->id;
+                                } else {
+                                    $user_id = $organizerExist->id;
+                                }
+
+                            } else{
+                                $user_id = '1';
+                            }
                             //-Create New meeting in an application---
                             $meeting = new Meeting();
                             $meeting->message_id = @$overview->msgno;
                             $meeting->meetRandomId =  generateRandomNumber(10);
                             $meeting->meeting_ref_no =  generateRandomNumber(14);
-                            $meeting->organizer = @$organizer[1];
+                            $meeting->organised_by = $user_id;
                             $meeting->meeting_title = @$event->summary;
                             $meeting->meeting_link = $meeting_link;
                             $meeting->meeting_date = date("Y-m-d",strtotime(@$event->dtstart));

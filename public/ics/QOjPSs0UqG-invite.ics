@@ -1,0 +1,44 @@
+BEGIN:VCALENDAR
+PRODID:-//Google Inc//Google Calendar 70.9054//EN
+VERSION:2.0
+CALSCALE:GREGORIAN
+METHOD:REQUEST
+BEGIN:VTIMEZONE
+TZID:Asia/Kolkata
+X-LIC-LOCATION:Asia/Kolkata
+BEGIN:STANDARD
+TZOFFSETFROM:+0530
+TZOFFSETTO:+0530
+TZNAME:IST
+DTSTART:19700101T000000
+END:STANDARD
+END:VTIMEZONE
+BEGIN:VEVENT
+DTSTART;TZID=Asia/Kolkata:20230310T170000
+DTEND;TZID=Asia/Kolkata:20230310T180000
+DTSTAMP:20230310T112823Z
+ORGANIZER;CN=sonam.patel@nrt.co.in:mailto:sonam.patel@nrt.co.in
+UID:7hjh5v3dcmbr0imt6ubscova7b@google.com
+ATTENDEE;CUTYPE=INDIVIDUAL;ROLE=REQ-PARTICIPANT;PARTSTAT=NEEDS-ACTION;RSVP=
+ TRUE;CN=Ashok Sahu;X-NUM-GUESTS=0:mailto:ashok@nrt.co.in
+ATTENDEE;CUTYPE=INDIVIDUAL;ROLE=REQ-PARTICIPANT;PARTSTAT=NEEDS-ACTION;RSVP=
+ TRUE;CN=erashok23@outlook.com;X-NUM-GUESTS=0:mailto:erashok23@outlook.com
+ATTENDEE;CUTYPE=INDIVIDUAL;ROLE=REQ-PARTICIPANT;PARTSTAT=ACCEPTED;RSVP=TRUE
+ ;CN=sonam.patel@nrt.co.in;X-NUM-GUESTS=0:mailto:sonam.patel@nrt.co.in
+X-GOOGLE-CONFERENCE:https://meet.google.com/npm-xias-ups
+X-MICROSOFT-CDO-OWNERAPPTID:244926408
+CREATED:20230310T112822Z
+DESCRIPTION:dfdgfg\n\n-::~:~::~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~
+ :~:~:~:~:~:~:~:~:~:~:~:~:~::~:~::-\nJoin with Google Meet: https://meet.goo
+ gle.com/npm-xias-ups\nOr dial: (US) +1 260-333-9855 PIN: 207771008#\n\nLear
+ n more about Meet at: https://support.google.com/a/users/answer/9282720\n\n
+ Please do not edit this section.\n-::~:~::~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~
+ :~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~::~:~::-
+LAST-MODIFIED:20230310T112822Z
+LOCATION:
+SEQUENCE:0
+STATUS:CONFIRMED
+SUMMARY:Help me help you!
+TRANSP:OPAQUE
+END:VEVENT
+END:VCALENDAR
