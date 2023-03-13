@@ -48,7 +48,8 @@ class MailSyncController extends Controller
             $result = imap_fetch_overview($mbox, "$num:{$MC->Nmsgs}", 0);
             $check = imap_mailboxmsginfo($mbox);
             foreach ($result as $overview) {
-                $checkMsgIExist = Meeting::where("message_id",$overview->msgno)->first();
+                $creation_date = date('Y-m-d',strtotime($overview->date));
+                $checkMsgIExist = Meeting::where("message_id",$overview->msgno)->where('created_at',$creation_date)->first();
                 if (empty($checkMsgIExist)) {
                     $getResults = $this->getmsg($mbox, $overview->msgno);
                     $randomNo = generateRandomNumber(10);
@@ -70,7 +71,7 @@ class MailSyncController extends Controller
                         ]);
 
                         $events = $ical->sortEventsWithOrder($ical->events());
-                        
+
                         if (!empty(@$events[0])) {
                             $event = @$events[0];
                             if($event->location=='Microsoft Teams Meeting'){
@@ -81,6 +82,7 @@ class MailSyncController extends Controller
                                 $meeting_link = @$event->location;
         
                             }
+                           
                            
                             $attendees = explode(",", @$event->attendee);
                             $organizer = explode(":", @$event->organizer);
@@ -96,6 +98,7 @@ class MailSyncController extends Controller
                             } else{
                                 $user_id = '1';
                             }
+
                             //-Create New meeting in an application---
                             $meeting = new Meeting();
                             $meeting->message_id = @$overview->msgno;

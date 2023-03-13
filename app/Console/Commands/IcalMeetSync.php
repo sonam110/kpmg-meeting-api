@@ -67,7 +67,8 @@ class IcalMeetSync extends Command
             $result = imap_fetch_overview($mbox, "$num:{$MC->Nmsgs}", 0);
             $check = imap_mailboxmsginfo($mbox);
             foreach ($result as $overview) {
-                $checkMsgIExist = Meeting::where("message_id",$overview->msgno)->first();
+                $creation_date = date('Y-m-d',strtotime($overview->date));
+                $checkMsgIExist = Meeting::where("message_id",$overview->msgno)->where('created_at',$creation_date)->first();
                 if (empty($checkMsgIExist)) {
                     $getResults = $this->getmsg($mbox, $overview->msgno);
                     $randomNo = generateRandomNumber(10);
