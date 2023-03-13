@@ -73,7 +73,7 @@ class MailSyncController extends Controller
                         
                         if (!empty(@$events[0])) {
                             $event = @$events[0];
-                            if($event->location=='Microsoft Teams meeting'){
+                            if($event->location=='Microsoft Teams Meeting'){
                                 $meeting_link = @$event->x_microsoft_skypeteamsmeetingurl_array[1];
                             }elseif(($from =='Google Calendar') && !empty(@$event->x_google_conference)) {
                                 $meeting_link = @$event->x_google_conference;

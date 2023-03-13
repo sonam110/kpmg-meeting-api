@@ -89,10 +89,10 @@ class IcalMeetSync extends Command
                         ]);
 
                         $events = $ical->sortEventsWithOrder($ical->events());
-                        
+
                         if (!empty(@$events[0])) {
                             $event = @$events[0];
-                            if($event->location=='Microsoft Teams meeting'){
+                            if($event->location=='Microsoft Teams Meeting'){
                                 $meeting_link = @$event->x_microsoft_skypeteamsmeetingurl_array[1];
                             }elseif(($from =='Google Calendar') && !empty(@$event->x_google_conference)) {
                                 $meeting_link = @$event->x_google_conference;
@@ -100,6 +100,7 @@ class IcalMeetSync extends Command
                                 $meeting_link = @$event->location;
         
                             }
+                           
                            
                             $attendees = explode(",", @$event->attendee);
                             $organizer = explode(":", @$event->organizer);
@@ -115,6 +116,7 @@ class IcalMeetSync extends Command
                             } else{
                                 $user_id = '1';
                             }
+
                             //-Create New meeting in an application---
                             $meeting = new Meeting();
                             $meeting->message_id = @$overview->msgno;
