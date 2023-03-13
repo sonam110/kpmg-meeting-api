@@ -392,7 +392,7 @@ class MeetingController extends Controller
             $meeting->meeting_time_start = $request->meeting_time_start;
             $meeting->meeting_time_end = $request->meeting_time_end;
             $meeting->meeting_link = $request->meeting_link;
-            $meeting->organised_by = auth()->id();
+            // $meeting->organised_by = auth()->id();
             $meeting->is_repeat = ($request->is_repeat== true) ? 1:0;
             $meeting->status = $request->status ? $request->status : 1;
             $meeting->save();

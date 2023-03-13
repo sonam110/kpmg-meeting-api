@@ -29,6 +29,7 @@ class User extends Authenticatable
         'password',
         'status',
         'created_by',
+        'password_last_updated'
     ];
 
     /**

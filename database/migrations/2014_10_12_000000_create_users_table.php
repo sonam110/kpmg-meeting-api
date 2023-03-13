@@ -65,6 +65,7 @@ return new class extends Migration
             $table->string('designation')->nullable();
             $table->unsignedBigInteger('created_by')->nullable();
             $table->tinyInteger('status')->default(1)->comment('1=Active,0=Inactive,2=Delete');
+            $table->date('password_last_updated')->nullable();
             $table->rememberToken();
             $table->timestamps();
             $table->softDeletes();

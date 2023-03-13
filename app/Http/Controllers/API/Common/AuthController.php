@@ -153,7 +153,7 @@ class AuthController extends Controller
             }
 
             $user = User::where('email', $tokenExist->email)
-                    ->update(['password' => Hash::make($request->password)]);
+                    ->update(['password' => Hash::make($request->password),'password_last_updated' => date('Y-m-d')]);
  
             DB::table('password_resets')->where(['email'=> $tokenExist->email])->delete();
 
@@ -193,7 +193,7 @@ class AuthController extends Controller
             }
             if(Hash::check($request->old_password, $user->password)) {
                 $user = User::where('email', Auth::user()->email)
-                    ->update(['password' => Hash::make($request->password)]);
+                    ->update(['password' => Hash::make($request->password),'password_last_updated' => date('Y-m-d')]);
 
                 ////////notification and mail//////////
                 /*$variable_data = [
