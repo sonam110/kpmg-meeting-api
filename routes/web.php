@@ -23,6 +23,11 @@ Route::get('/optimize-command', function () {
     return redirect('/');
 });
 
+Route::get('/meeting-sync', function () {
+    \Artisan::call('ical-mail:sync');
+    return redirect('/');
+});
+
 Route::get('/mail-sync', function () {
     \Artisan::call('mail:sync');
     return redirect('/');
