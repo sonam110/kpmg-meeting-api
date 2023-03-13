@@ -1,8 +1,7 @@
 <?php
-error_reporting(E_ALL ^ (E_NOTICE | E_WARNING));
-
 namespace App\Http\Controllers\Api\Common;
 
+error_reporting(E_ALL ^ (E_NOTICE | E_WARNING));
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Meeting;
