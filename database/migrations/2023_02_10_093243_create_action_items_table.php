@@ -29,6 +29,8 @@ return new class extends Migration
             $table->enum('status',['pending','in_progress','completed','on_hold','cancelled'])->default('pending');
             $table->date('complete_date')->nullable();
             $table->text('comment')->nullable();
+            $table->unsignedBigInteger('created_by');
+            $table->foreign('created_by')->references('id')->on('users')->onDelete('cascade');
             $table->timestamps();
         });
     }

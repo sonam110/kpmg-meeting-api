@@ -5,6 +5,7 @@ namespace App\Http\Controllers\API\Common;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\MeetingDocument;
+use App\Models\User;
 use App\Models\Notification;
 use App\Models\MeetingNote;
 use Validator;
@@ -128,15 +129,29 @@ class NotesController extends Controller
             }
 
             $notification = new Notification;
-            $notification->user_id              = $user_id;
+            $notification->user_id              = $meetingNote->meeting->organised_by ? $meetingNote->meeting->organised_by : User::first()->id;
             $notification->sender_id            = auth()->id();
             $notification->type                 = 'note';
             $notification->status_code          = 'success';
             $notification->title                = 'A New Meeting Note Has Been Created';
             $notification->message              = 'A new note on meeting '.$meetingNote->meeting->meeting_title.' has been added. Please click here for the details.';
             $notification->read_status          = false;
-            $notification->data_id              = $meetingNote->id;
+            $notification->data_id              = $request->meeting_id;
             $notification->save();
+
+            $attendees = $meetingNote->meeting->attendees;
+            foreach ($attendees as $key => $value) {
+                $notification = new Notification;
+                $notification->user_id              = $value->user_id;
+                $notification->sender_id            = auth()->id();
+                $notification->type                 = 'note';
+                $notification->status_code          = 'success';
+                $notification->title                = 'A New Meeting Note Has Been Created';
+                $notification->message              = 'A new note on meeting '.$meetingNote->meeting->meeting_title.' has been added. Please click here for the details.';
+                $notification->read_status          = false;
+                $notification->data_id              = $request->meeting_id;
+                $notification->save();
+            }
             
             DB::commit();
             return response()->json(prepareResult(false, $meetingNote, trans('translate.created')),config('httpcodes.created'));
@@ -220,19 +235,20 @@ class NotesController extends Controller
             $documents = $request->documents;
             $deleteOldDoc = MeetingDocument::where('note_id',$meetingNote->id)->where('type','note')->delete();
             if(is_array(@$documents) && count(@$documents) >0 ){
-                $meeting_id = $request->meeting_id;
-                $notes_id = MeetingNote::where('meeting_id',$meeting_id)->pluck('id')->toArray();
-                $checkDoc = MeetingDocument::where('uploading_file_name',$document['uploading_file_name'])
-                ->where(function($q) use ($meeting_id,$notes_id) {
-                    $q->where('meeting_id',$meeting_id)
-                    ->orWhereIn('note_id', $notes_id);
-                })
-                ->count();
-                if($checkDoc > 0)
-                {
-                    return response()->json(prepareResult(true, [], trans('translate.document_dublicacy')), config('httpcodes.bad_request'));
-                }
                 foreach ($documents as $key => $document) {
+                    $meeting_id = $request->meeting_id;
+                    $notes_id = MeetingNote::where('meeting_id',$meeting_id)->pluck('id')->toArray();
+                    $checkDoc = MeetingDocument::where('uploading_file_name',$document['uploading_file_name'])
+                    ->where(function($q) use ($meeting_id,$notes_id) {
+                        $q->where('meeting_id',$meeting_id)
+                        ->orWhereIn('note_id', $notes_id);
+                    })
+                    ->count();
+                    if($checkDoc > 0)
+                    {
+                        return response()->json(prepareResult(true, [], trans('translate.document_dublicacy')), config('httpcodes.bad_request'));
+                    }
+                    
                     $doc = new MeetingDocument;
                     $doc->note_id = $meetingNote->id;
                     $doc->type = 'note';
@@ -242,7 +258,31 @@ class NotesController extends Controller
                     $doc->uploading_file_name = $document['uploading_file_name'];
                     $doc->save();
                 }
+            }
 
+            $notification = new Notification;
+            $notification->user_id              = $meetingNote->meeting->organised_by ? $meetingNote->meeting->organised_by : User::first()->id;
+            $notification->sender_id            = auth()->id();
+            $notification->type                 = 'note';
+            $notification->status_code          = 'success';
+            $notification->title                = 'A New Meeting Note Has Been Created';
+            $notification->message              = 'A new note on meeting '.$meetingNote->meeting->meeting_title.' has been added. Please click here for the details.';
+            $notification->read_status          = false;
+            $notification->data_id              = $request->meeting_id;
+            $notification->save();
+
+            $attendees = $meetingNote->meeting->attendees;
+            foreach ($attendees as $key => $value) {
+                $notification = new Notification;
+                $notification->user_id              = $value->user_id;
+                $notification->sender_id            = auth()->id();
+                $notification->type                 = 'note';
+                $notification->status_code          = 'success';
+                $notification->title                = 'A New Meeting Note Has Been Created';
+                $notification->message              = 'A new note on meeting '.$meetingNote->meeting->meeting_title.' has been added. Please click here for the details.';
+                $notification->read_status          = false;
+                $notification->data_id              = $request->meeting_id;
+                $notification->save();
             }
             
             DB::commit();

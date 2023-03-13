@@ -22,13 +22,13 @@ class Kernel extends ConsoleKernel
 
     protected function schedule(Schedule $schedule)
     {
-        /*$schedule->command('send:meeting-reminder')
+        $schedule->command('send:meeting-reminder')
         ->everyMinute()
         ->timezone(env('TIME_ZONE', 'Asia/Calcutta'));
 
-        $schedule->command('send:action-items-reminder')
-        ->everyMinute()
-        ->timezone(env('TIME_ZONE', 'Asia/Calcutta'));*/
+        $schedule->command('send:task-reminder')
+        ->dailyAt('09:00 AM')
+        ->timezone(env('TIME_ZONE', 'Asia/Calcutta'));
 
         $schedule->command('ical-mail:sync')
         ->everyMinute()

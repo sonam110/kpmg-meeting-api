@@ -151,6 +151,7 @@ class ActionItemController extends Controller
             $actionItem->image =  $request->image;
             $actionItem->complete_date =  $request->complete_date;
             $actionItem->comment =  $request->comment;
+            $actionItem->created_by =  auth()->id();
             $actionItem->status =  (!empty($request->status)) ? $request->status : 'pending';
             $actionItem->save();
 
@@ -175,8 +176,8 @@ class ActionItemController extends Controller
             $notification->sender_id            = auth()->id();
             $notification->type                 = 'action';
             $notification->status_code          = 'success';
-            $notification->title                = 'New action Item';
-            $notification->message              = '';
+            $notification->title                = 'A new task has been assigned to you';
+            $notification->message              = 'Hello '.$actionItem->owner->name.', a new task has been assigned to you. Please check Action Menu to view the details';
             $notification->data_id              = $actionItem->id;
             $notification->read_status          = false;
             $notification->save();
@@ -233,7 +234,7 @@ class ActionItemController extends Controller
      */
     public function update(Request $request, $id)
     {
-         $validation = \Validator::make($request->all(), [
+        $validation = \Validator::make($request->all(), [
             'meeting_id'      => 'required|exists:meetings,id',
             'task'   => 'required',
         ]);
@@ -260,6 +261,7 @@ class ActionItemController extends Controller
             $actionItem->image =  $request->image;
             $actionItem->complete_date =  $request->complete_date;
             $actionItem->comment =  $request->comment;
+            $actionItem->created_by =  auth()->id();
             $actionItem->status =  (!empty($request->status)) ? $request->status : 'pending';
             $actionItem->save();
 
@@ -314,6 +316,8 @@ class ActionItemController extends Controller
         try 
         {
             $ids = $request->ids;
+
+            
             if($request->action == 'in_progress')
             {
                 ActionItem::whereIn('id',$ids)->update(['status'=>"in_progress"]);
@@ -349,13 +353,54 @@ class ActionItemController extends Controller
                 {
                     ActionItem::whereIn('id',$ids)->update(['complete_percentage'=>$request->percent]);
                 }
-                $message = trans('translate.pending');
+                $message = trans('translate.percentage');
             }
             else
             {
                 return response()->json(prepareResult(true, [], 'Provide a valid Action'), config('httpcodes.success'));
             }
+
             $actionItems = ActionItem::whereIn('id',$ids)->get();
+            foreach ($actionItems as $key => $value) {
+                $notification = new Notification;
+                $notification->user_id              = $value->owner_id;
+                $notification->sender_id            = auth()->id();
+                $notification->type                 = 'action';
+                $notification->status_code          = 'success';
+                if($request->action == 'percentage')
+                {
+                    $notification->title                = 'Action Percentage  Updated';
+                    $notification->message              = 'Your action has been marked as '.$request->percent.'% completed. Please check Action Menu to find more details';
+                }
+                else
+                {
+                    $notification->title                = 'Action Status Updated';
+                    $notification->message              = 'Your action has been marked as '.$request->action.'. Please check Action Menu to find more details';
+                }
+                $notification->data_id              = $value->id;
+                $notification->read_status          = false;
+                $notification->save();
+
+
+                $notification = new Notification;
+                $notification->user_id              = $value->created_by;
+                $notification->sender_id            = auth()->id();
+                $notification->type                 = 'action';
+                $notification->status_code          = 'success';
+                if($request->action == 'percentage')
+                {
+                    $notification->title                = 'Action Percentage  Updated';
+                    $notification->message              = 'Your action has been marked as '.$request->percent.'% completed. Please check Action Menu to find more details';
+                }
+                else
+                {
+                    $notification->title                = 'Action Status Updated';
+                    $notification->message              = 'Your action has been marked as '.$request->action.'. Please check Action Menu to find more details';
+                }
+                $notification->data_id              = $value->id;
+                $notification->read_status          = false;
+                $notification->save();
+            }
             DB::commit();
             return response()->json(prepareResult(false, $actionItems, $message), config('httpcodes.success'));
         }
