@@ -36,6 +36,10 @@ Route::namespace('App\Http\Controllers\API\Common')->group(function () {
         Route::post('update-password', 'updatePassword')->name('update-password');
     });
 
+    Route::controller(MailSyncController::class)->group(function () {
+        Route::get('meeting-sync', 'meetingSync')->name('meeting-sync');
+    });
+
     Route::group(['middleware' => 'auth:api'],function () {
         Route::controller(AuthController::class)->group(function () {
             Route::post('logout', 'logout')->name('logout');
