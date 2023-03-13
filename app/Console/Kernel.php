@@ -15,8 +15,8 @@ class Kernel extends ConsoleKernel
      */
 
     protected $commands = [
-        //Commands\ScheduleMeetingReminder::class,
-        //Commands\ActionItemReminder::class,
+        Commands\ScheduleMeetingReminder::class,
+        Commands\ActionItemReminder::class,
         Commands\IcalMeetSync::class,
     ];
 
