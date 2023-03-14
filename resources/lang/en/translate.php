@@ -684,6 +684,6 @@ return [
     "booking-mail" => "Booking Person Email",
     "document_dublicacy"=>"Dublicate Document Uploaded!",
     "read"=>"Notification Read!",
-    "read_all"=>"Notification Read All!",
+    "all_read"=>"Notification Read All!",
     "fetched_count"=>"Fetched Count!",
 ];
