@@ -97,9 +97,21 @@ class IcalMeetSync extends Command
                             ]);
 
                             $events = $ical->sortEventsWithOrder($ical->events());
-                          
+                           
                             if (!empty(@$events[0])) {
                                 $event = @$events[0];
+                               
+                                if($event->location=='Microsoft Teams Meeting'){
+                                        $meeting_link = @$event->x_microsoft_skypeteamsmeetingurl_array[1];
+                                }elseif(($from =='Google Calendar') && !empty(@$event->x_google_conference)) {
+                                    $meeting_link = @$event->x_google_conference;
+                                } else{
+                                    $meeting_link = @$event->location;
+            
+                                }
+                                   
+                                $attendees = (!empty(@$event->attendee)) ? explode(",", @$event->attendee) : [];
+                                $organizer = explode(":", @$event->organizer);
                                 $checkMsgIExist = Meeting::where("meeting_uid",@$event->uid)->first();
                                 if(!empty($checkMsgIExist)){
                                     if($event->status=='CANCELLED'){
@@ -109,22 +121,24 @@ class IcalMeetSync extends Command
                                     if($event->status=='DELETED'){
                                         $checkMsgIExist->delete();
                                     }
+                                    if($event->status=='CONFIRMED' && @$checkMsgIExist->message_id != $overview->msgno){
+                                        $checkMsgIExist->message_id = @$overview->msgno;
+                                        $checkMsgIExist->meeting_title = @$event->summary;
+                                        $checkMsgIExist->meeting_date = date("Y-m-d",strtotime(@$event->dtstart));
+                                        $checkMsgIExist->meeting_time_start = date("H:i:s",strtotime(@$event->dtstart));
+                                        $checkMsgIExist->meeting_time_end = date("H:i:s",strtotime(@$event->dtend) );
+                                        $checkMsgIExist->agenda_of_meeting = @$event->description;
+                                        $checkMsgIExist->invite_file = @$getResults["filePath"];
+                                        $checkMsgIExist->save();
+                                        \Log::info('meeting updated:'.@$checkMsgIExist->id);
+                                        $deleteOldAtt = Attendee::where('meeting_id',$checkMsgIExist->id)->delete();
+                                        $this->addAttendees($attendees,$checkMsgIExist);
+                                    }
+
                                     \Log::info('id already-'.@$checkMsgIExist->id);
                                 }
                                 
                                 if (empty($checkMsgIExist)) {
-                                    if($event->location=='Microsoft Teams Meeting'){
-                                        $meeting_link = @$event->x_microsoft_skypeteamsmeetingurl_array[1];
-                                    }elseif(($from =='Google Calendar') && !empty(@$event->x_google_conference)) {
-                                        $meeting_link = @$event->x_google_conference;
-                                    } else{
-                                        $meeting_link = @$event->location;
-                
-                                    }
-                                   
-                                   
-                                    $attendees = explode(",", @$event->attendee);
-                                    $organizer = explode(":", @$event->organizer);
                                     if(!empty(@$organizer[1])){
                                         $organizerExist = User::where("email",@$organizer[1])->first();
                                         if (empty($organizerExist)) {
@@ -155,43 +169,9 @@ class IcalMeetSync extends Command
                                     $meeting->agenda_of_meeting = @$event->description;
                                     $meeting->invite_file = @$getResults["filePath"];
                                     $meeting->save();
-                                     \Log::info('meeting'.@$meeting->id);
-                                    foreach ($attendees as $key => $attn) {
-                                        $attend = explode(":", @$attn);
-                                        $attendee = @$attend[1];
-                                       
-
-                                        $checkUser = User::where("email",$attendee)->first();
-                                        /*---------Add User---------------------*/
-                                        if (empty($checkUser)) {
-                                            $userInfo = $this->addUser($attendee);
-                                            $user_id = $userInfo->id;
-                                            $name = $userInfo->name;
-                                        } else {
-                                            $user_id = $checkUser->id;
-                                            $name = $checkUser->name;
-                                        }
-                                       
-
-                                        $attende = new Attendee();
-                                        $attende->meeting_id = $meeting->id;
-                                        $attende->user_id = $user_id;
-                                        $attende->save();
-
-                                        if (env("IS_MAIL_ENABLE", false) == true) {
-                                            $content = [
-                                                "name" => $name,
-                                                "meeting_title" =>$meeting->meeting_title,
-                                                "meeting_date" => $meeting->meeting_date,
-                                                "meeting_time" =>$meeting->meeting_time_start,
-                                                "agenda_of_meeting" =>$meeting->agenda_of_meeting,
-                                            ];
-
-                                            $recevier = Mail::to($attendee)->send(
-                                                new MeetingMail($content)
-                                            );
-                                        }
-                                    }
+                                    \Log::info('meeting created:'.@$meeting->id);
+                                    $this->addAttendees($attendees,$meeting);
+                                   
                                 }
                             }
                         }
@@ -202,6 +182,43 @@ class IcalMeetSync extends Command
         } catch (\Exception $e) {
             die($e->getMessage());
         }
+    }
+
+    function addAttendees($attendees,$meeting)
+    {
+        foreach ($attendees as $key => $attn) {
+            $attend = explode(":", @$attn);
+            $attendee = @$attend[1];
+            $checkUser = User::where("email",$attendee)->first();
+            /*---------Add User---------------------*/
+            if (empty($checkUser)) {
+                $userInfo = $this->addUser($attendee);
+                $user_id = $userInfo->id;
+                $name = $userInfo->name;
+            } else {
+                $user_id = $checkUser->id;
+                $name = $checkUser->name;
+            }
+           
+            $attende = new Attendee();
+            $attende->meeting_id = $meeting->id;
+            $attende->user_id = $user_id;
+            $attende->save();
+            if (env("IS_MAIL_ENABLE", false) == true) {
+                $content = [
+                    "name" => $name,
+                    "meeting_title" =>$meeting->meeting_title,
+                    "meeting_date" => $meeting->meeting_date,
+                    "meeting_time" =>$meeting->meeting_time_start,
+                    "agenda_of_meeting" =>$meeting->agenda_of_meeting,
+                ];
+
+                $recevier = Mail::to($attendee)->send(
+                    new MeetingMail($content)
+                );
+            }
+        }
+
     }
     function getmsg($mbox, $mid)
     {
