@@ -19,6 +19,7 @@ use Auth;
 use Exception;
 use DB;
 use Mail;
+use Str;
 use App\Mail\MeetingMail;
 use App\Mail\WelcomeMail;
 use Carbon\Carbon;
@@ -175,10 +176,11 @@ class MeetingController extends Controller
 
         DB::beginTransaction();
         try {
+            $rand = strtoupper(Str::random(2)).rand(10000000,99999999);
             $meeting = new Meeting;
             $meeting->meetRandomId = generateRandomNumber(14);
             $meeting->meeting_title = $request->meeting_title;
-            $meeting->meeting_ref_no = generateRandomNumber(14);
+            $meeting->meeting_ref_no = $rand;
             $meeting->agenda_of_meeting  = $request->agenda_of_meeting;
             $meeting->meeting_date = $request->meeting_date;
             $meeting->meeting_time_start = $request->meeting_time_start;

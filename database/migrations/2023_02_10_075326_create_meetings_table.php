@@ -21,7 +21,7 @@ return new class extends Migration
             // $table->string('organizer');
             $table->string('meeting_title');
             $table->string('meeting_ref_no')->nullable();
-            $table->text('agenda_of_meeting')->nullable();
+            $table->longText('agenda_of_meeting')->nullable();
             $table->date('meeting_date');
             $table->time('meeting_time_start');
             $table->time('meeting_time_end');
