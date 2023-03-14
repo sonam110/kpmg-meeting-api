@@ -117,6 +117,12 @@ return [
         'emergency' => [
             'path' => storage_path('logs/laravel.log'),
         ],
+
+        'mailsync' => [
+            'driver' => 'single',
+            'path' => storage_path('logs/mailsync-file.log'),
+            'level' => 'info',
+        ],
     ],
 
 ];

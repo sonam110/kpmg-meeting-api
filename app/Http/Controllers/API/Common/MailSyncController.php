@@ -1,5 +1,5 @@
 <?php
-namespace App\Http\Controllers\Api\Common;
+namespace App\Http\Controllers\API\Common;
 
 error_reporting(E_ALL ^ (E_NOTICE | E_WARNING));
 use App\Http\Controllers\Controller;
@@ -22,140 +22,168 @@ use Spatie\Permission\Models\Role;
 use DB;
 use File;
 use ICal\ICal;
+
 class MailSyncController extends Controller
 {
     public function meetingSync()
     {
-        \Log::info("i m trigger");
+        \Log::channel('mailsync')->info("i m trigger from api sync.");
         try {
             File::ensureDirectoryExists("public/ics");
             $incoming_mail_server =
-                "{mail.gofactz.com:993/imap/ssl/novalidate-cert}INBOX";
-            //This is an example incoming mail server for Gmail which you can configure to your outlook, check out the manual on Supported IMAP client list below.
+                "{mail.".env('IMAP_MAIL_SERVER').":".env('IMAP_MAIL_PORT')."/imap/ssl/novalidate-cert}INBOX";
+            $your_email = env("IMAP_CONNECTED_MAIL"); // your outlook email ID
+            $yourpassword = env("IMAP_MAIL_PASSWARD"); // your outlook email password
 
-            $your_email = env("CONNECTED_MAIL"); //'erashok23@outlook.com'; // your outlook email ID
-            $yourpassword = env("MAIL_PASSWARD"); //'Ashok_64554@'; // your outlook email password
-
-            ($mbox = imap_open(
+            $mbox = imap_open(
                 $incoming_mail_server,
                 $your_email,
                 $yourpassword
-            )) or die("can't connect: " . imap_last_error());
+            );
+            if(!$mbox)
+            {
+                \Log::channel('mailsync')->error("can't connect: " . imap_last_error());
+                \Log::channel('emergency')->error("can't connect: " . imap_last_error());
+                die;
+            }
+
             $num = imap_num_msg($mbox); // read total messages in email
             $MC = imap_check($mbox);
             $msg = [];
             // Fetch an overview for all messages in INBOX
-            $result = imap_fetch_overview($mbox, "$num:{$MC->Nmsgs}", 0);
-            $check = imap_mailboxmsginfo($mbox);
-            foreach ($result as $overview) {
-                $creation_date = date('Y-m-d',strtotime($overview->date));
-                $checkMsgIExist = Meeting::where("message_id",$overview->msgno)->where('created_at',$creation_date)->first();
-                \Log::info('id'.@$checkMsgIExist->id);
-                if (empty($checkMsgIExist)) {
-                    $getResults = $this->getmsg($mbox, $overview->msgno);
-                    $randomNo = generateRandomNumber(10);
-                    $path = public_path(@$getResults["filePath"]);
-                    preg_match_all("#\bhttps?://[^,\s()<>]+(?:\([\w\d]+\)|([^,[:punct:]\s]|/))#", $message,$match);
-                    $meeting_links = @$match[0];
-                    $from = trim(substr($overview->from, 0, 16));
-                     \Log::info($path);
-                    if (@$getResults["filePath"]) {
-                        $ical = new ICal($path, [
-                            "defaultSpan" => 2, // Default value
-                            "defaultTimeZone" => "UTC",
-                            "defaultWeekStart" => "MO", // Default value
-                            "disableCharacterReplacement" => false, // Default value
-                            "filterDaysAfter" => null, // Default value
-                            "filterDaysBefore" => null, // Default value
-                            "httpUserAgent" => null, // Default value
-                            "skipRecurrence" => false, // Default value
-                        ]);
+            $search = 'SINCE "' . date("j F Y", strtotime("0 days")) . '"';
+            $emails = imap_search($mbox, $search); 
 
-                        $events = $ical->sortEventsWithOrder($ical->events());
-                       
-                        if (!empty(@$events[0])) {
-                            $event = @$events[0];
-                            if($event->location=='Microsoft Teams Meeting'){
-                                $meeting_link = @$event->x_microsoft_skypeteamsmeetingurl_array[1];
-                            }elseif(($from =='Google Calendar') && !empty(@$event->x_google_conference)) {
-                                $meeting_link = @$event->x_google_conference;
-                            } else{
-                                $meeting_link = @$event->location;
-        
-                            }
+           // $emails = array_reverse($emails);
+
+            if(!empty($emails))
+            {
+                foreach($emails as $email)
+                {
+                    $result = imap_fetch_overview($mbox, $email, 0);
+                    $check = imap_mailboxmsginfo($mbox);
+
+                    foreach ($result as $overview) 
+                    {
+                        $creation_date = date('Y-m-d',strtotime($overview->date));
+                        $getResults = $this->getmsg($mbox, $overview->msgno);
+                        $randomNo = generateRandomNumber(10);
+                        $path = public_path(@$getResults["filePath"]);
+                        preg_match_all("#\bhttps?://[^,\s()<>]+(?:\([\w\d]+\)|([^,[:punct:]\s]|/))#", $message,$match);
+                        $meeting_links = @$match[0];
+                        $from = trim(substr($overview->from, 0, 16));
+                         \Log::info($path);
+                        if (@$getResults["filePath"]) 
+                        {
+                            $ical = new ICal($path, [
+                                "defaultSpan" => 2, // Default value
+                                "defaultTimeZone" => "UTC",
+                                "defaultWeekStart" => "MO", // Default value
+                                "disableCharacterReplacement" => false, // Default value
+                                "filterDaysAfter" => null, // Default value
+                                "filterDaysBefore" => null, // Default value
+                                "httpUserAgent" => null, // Default value
+                                "skipRecurrence" => false, // Default value
+                            ]);
+
+                            $events = $ical->sortEventsWithOrder($ical->events());
                            
-                           
-                            $attendees = explode(",", @$event->attendee);
-                            $organizer = explode(":", @$event->organizer);
-                            if(!empty(@$organizer[1])){
-                                $organizerExist = User::where("email",@$organizer[1])->first();
-                                if (empty($organizerExist)) {
-                                    $userInfo = $this->addUser(@$organizer[1]);
-                                    $user_id = $userInfo->id;
-                                } else {
-                                    $user_id = $organizerExist->id;
-                                }
-
-                            } else{
-                                $user_id = '1';
-                            }
-
-                            //-Create New meeting in an application---
-                            $meeting = new Meeting();
-                            $meeting->message_id = @$overview->msgno;
-                            $meeting->meetRandomId =  generateRandomNumber(10);
-                            $meeting->meeting_ref_no =  generateRandomNumber(14);
-                            $meeting->organised_by = $user_id;
-                            $meeting->meeting_title = @$event->summary;
-                            $meeting->meeting_link = $meeting_link;
-                            $meeting->meeting_date = date("Y-m-d",strtotime(@$event->dtstart));
-                            $meeting->meeting_time_start = date("H:i:s",strtotime(@$event->dtstart));
-                            $meeting->meeting_time_end = date("H:i:s",strtotime(@$event->dtend) );
-                            $meeting->agenda_of_meeting = @$event->description;
-                            $meeting->invite_file = @$getResults["filePath"];
-                            $meeting->save();
-                             \Log::info('meeting'.@$meeting->id);
-                            foreach ($attendees as $key => $attn) {
-                                $attend = explode(":", @$attn);
-                                $attendee = @$attend[1];
+                            if (!empty(@$events[0])) 
+                            {
+                                $event = @$events[0];
                                
-
-                                $checkUser = User::where("email",$attendee)->first();
-                                /*---------Add User---------------------*/
-                                if (empty($checkUser)) {
-                                    $userInfo = $this->addUser($attendee);
-                                    $user_id = $userInfo->id;
-                                    $name = $userInfo->name;
-                                } else {
-                                    $user_id = $checkUser->id;
-                                    $name = $checkUser->name;
+                                if($event->location=='Microsoft Teams Meeting')
+                                {
+                                        $meeting_link = @$event->x_microsoft_skypeteamsmeetingurl_array[1];
                                 }
-                               
+                                elseif(($from =='Google Calendar') && !empty(@$event->x_google_conference)) 
+                                {
+                                    $meeting_link = @$event->x_google_conference;
+                                } 
+                                else
+                                {
+                                    $meeting_link = @$event->location;
+                                }
+                                   
+                                $attendees = (!empty(@$event->attendee)) ? explode(",", @$event->attendee) : [];
+                                $organizer = explode(":", @$event->organizer);
+                                $checkMsgIExist = Meeting::where("meeting_uid",@$event->uid)->first();
+                                if(!empty($checkMsgIExist))
+                                {
+                                    if($event->status=='CANCELLED')
+                                    {
+                                            $checkMsgIExist->status ='3';
+                                            $checkMsgIExist->save();
+                                    }
+                                    elseif($event->status=='DELETED')
+                                    {
+                                        $checkMsgIExist->delete();
+                                    }
+                                    elseif($event->status=='CONFIRMED' && @$checkMsgIExist->message_id != $overview->msgno)
+                                    {
+                                        $checkMsgIExist->message_id = @$overview->msgno;
+                                        $checkMsgIExist->meeting_title = @$event->summary;
+                                        $checkMsgIExist->meeting_date = date("Y-m-d",strtotime(@$event->dtstart));
+                                        $checkMsgIExist->meeting_time_start = date("H:i:s",strtotime(@$event->dtstart));
+                                        $checkMsgIExist->meeting_time_end = date("H:i:s",strtotime(@$event->dtend) );
+                                        $checkMsgIExist->agenda_of_meeting = @$event->description;
+                                        $checkMsgIExist->invite_file = @$getResults["filePath"];
+                                        $checkMsgIExist->save();
+                                        \Log::channel('mailsync')->info('meeting updated:'.@$checkMsgIExist->id);
+                                        $deleteOldAtt = Attendee::where('meeting_id',$checkMsgIExist->id)->delete();
+                                        $this->addAttendees($attendees,$checkMsgIExist);
+                                    }
 
-                                $attende = new Attendee();
-                                $attende->meeting_id = $meeting->id;
-                                $attende->user_id = $user_id;
-                                $attende->save();
+                                    \Log::channel('mailsync')->info('id already-'.@$checkMsgIExist->id);
+                                }
+                                
+                                if (empty($checkMsgIExist)) 
+                                {
+                                    if(!empty(@$organizer[1]))
+                                    {
+                                        $organizerExist = User::where("email",@$organizer[1])->first();
+                                        if (empty($organizerExist)) 
+                                        {
+                                            $userInfo = $this->addUser(@$organizer[1]);
+                                            $user_id = $userInfo->id;
+                                        } else {
+                                            $user_id = $organizerExist->id;
+                                        }
 
-                                if (env("IS_MAIL_ENABLE", false) == true) {
-                                    $content = [
-                                        "name" => $name,
-                                        "meeting_title" =>$meeting->meeting_title,
-                                        "meeting_date" => $meeting->meeting_date,
-                                        "meeting_time" =>$meeting->meeting_time_start,
-                                        "agenda_of_meeting" =>$meeting->agenda_of_meeting,
-                                    ];
+                                    } else{
+                                        $user_id = '1';
+                                    }
 
-                                    $recevier = Mail::to($attendee)->send(
-                                        new MeetingMail($content)
-                                    );
+                                    //-Create New meeting in an application---
+                                    $meeting_ref_no = strtoupper(Str::random(2)).rand(1000,9999);
+
+                                    $meeting = new Meeting();
+                                    $meeting->message_id = @$overview->msgno;
+                                    $meeting->meetRandomId =  generateRandomNumber(14);
+                                    $meeting->meeting_ref_no =  $meeting_ref_no;
+                                    $meeting->organised_by = $user_id;
+                                    $meeting->meeting_title = @$event->summary;
+                                    $meeting->meeting_link = $meeting_link;
+                                    $meeting->meeting_uid = @$event->uid;
+                                    $meeting->meeting_date = date("Y-m-d",strtotime(@$event->dtstart));
+                                    $meeting->meeting_time_start = date("H:i:s",strtotime(@$event->dtstart));
+                                    $meeting->meeting_time_end = date("H:i:s",strtotime(@$event->dtend) );
+                                    $meeting->agenda_of_meeting = @$event->description;
+                                    $meeting->invite_file = @$getResults["filePath"];
+                                    $meeting->save();
+                                    \Log::channel('mailsync')->info('meeting created:'.@$meeting->id);
+                                    $this->addAttendees($attendees,$meeting);
+                                   
                                 }
                             }
                         }
+                        
                     }
                 }
             }
         } catch (\Exception $e) {
+            \Log::channel('mailsync')->error($e->getMessage());
+            \Log::channel('emergency')->error($e->getMessage());
             die($e->getMessage());
         }
     }

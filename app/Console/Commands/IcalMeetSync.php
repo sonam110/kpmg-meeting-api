@@ -23,6 +23,7 @@ use DB;
 use File;
 use Str;
 use ICal\ICal;
+
 class IcalMeetSync extends Command
 {
     /**
@@ -46,23 +47,26 @@ class IcalMeetSync extends Command
      */
     public function handle()
     {
-        \Log::info("i m trigger");
+        \Log::channel('mailsync')->info("i m trigger from automation.");
         try {
             File::ensureDirectoryExists("public/ics");
-            $server = env('IMAP_MAIL_SERVER');
-            $port = env('IMAP_MAIL_PORT');
             $incoming_mail_server =
-                "{mail.".$server.":".$port."/imap/ssl/novalidate-cert}INBOX";
-            //This is an example incoming mail server for Gmail which you can configure to your outlook, check out the manual on Supported IMAP client list below.
+                "{mail.".env('IMAP_MAIL_SERVER').":".env('IMAP_MAIL_PORT')."/imap/ssl/novalidate-cert}INBOX";
+            $your_email = env("IMAP_CONNECTED_MAIL"); // your outlook email ID
+            $yourpassword = env("IMAP_MAIL_PASSWARD"); // your outlook email password
 
-            $your_email = env("IMAP_CONNECTED_MAIL"); //'erashok23@outlook.com'; // your outlook email ID
-            $yourpassword = env("IMAP_MAIL_PASSWARD"); //'Ashok_64554@'; // your outlook email password
-
-            ($mbox = imap_open(
+            $mbox = imap_open(
                 $incoming_mail_server,
                 $your_email,
                 $yourpassword
-            )) or die("can't connect: " . imap_last_error());
+            );
+            if(!$mbox)
+            {
+                \Log::channel('mailsync')->error("can't connect: " . imap_last_error());
+                \Log::channel('emergency')->error("can't connect: " . imap_last_error());
+                die;
+            }
+
             $num = imap_num_msg($mbox); // read total messages in email
             $MC = imap_check($mbox);
             $msg = [];
@@ -72,12 +76,15 @@ class IcalMeetSync extends Command
 
            // $emails = array_reverse($emails);
 
-            if(!empty($emails)){
-                foreach($emails as $email){
+            if(!empty($emails))
+            {
+                foreach($emails as $email)
+                {
                     $result = imap_fetch_overview($mbox, $email, 0);
                     $check = imap_mailboxmsginfo($mbox);
 
-                    foreach ($result as $overview) {
+                    foreach ($result as $overview) 
+                    {
                         $creation_date = date('Y-m-d',strtotime($overview->date));
                         $getResults = $this->getmsg($mbox, $overview->msgno);
                         $randomNo = generateRandomNumber(10);
@@ -86,7 +93,8 @@ class IcalMeetSync extends Command
                         $meeting_links = @$match[0];
                         $from = trim(substr($overview->from, 0, 16));
                          \Log::info($path);
-                        if (@$getResults["filePath"]) {
+                        if (@$getResults["filePath"]) 
+                        {
                             $ical = new ICal($path, [
                                 "defaultSpan" => 2, // Default value
                                 "defaultTimeZone" => "UTC",
@@ -100,30 +108,39 @@ class IcalMeetSync extends Command
 
                             $events = $ical->sortEventsWithOrder($ical->events());
                            
-                            if (!empty(@$events[0])) {
+                            if (!empty(@$events[0])) 
+                            {
                                 $event = @$events[0];
                                
-                                if($event->location=='Microsoft Teams Meeting'){
+                                if($event->location=='Microsoft Teams Meeting')
+                                {
                                         $meeting_link = @$event->x_microsoft_skypeteamsmeetingurl_array[1];
-                                }elseif(($from =='Google Calendar') && !empty(@$event->x_google_conference)) {
+                                }
+                                elseif(($from =='Google Calendar') && !empty(@$event->x_google_conference)) 
+                                {
                                     $meeting_link = @$event->x_google_conference;
-                                } else{
+                                } 
+                                else
+                                {
                                     $meeting_link = @$event->location;
-            
                                 }
                                    
                                 $attendees = (!empty(@$event->attendee)) ? explode(",", @$event->attendee) : [];
                                 $organizer = explode(":", @$event->organizer);
                                 $checkMsgIExist = Meeting::where("meeting_uid",@$event->uid)->first();
-                                if(!empty($checkMsgIExist)){
-                                    if($event->status=='CANCELLED'){
+                                if(!empty($checkMsgIExist))
+                                {
+                                    if($event->status=='CANCELLED')
+                                    {
                                             $checkMsgIExist->status ='3';
                                             $checkMsgIExist->save();
                                     }
-                                    if($event->status=='DELETED'){
+                                    elseif($event->status=='DELETED')
+                                    {
                                         $checkMsgIExist->delete();
                                     }
-                                    if($event->status=='CONFIRMED' && @$checkMsgIExist->message_id != $overview->msgno){
+                                    elseif($event->status=='CONFIRMED' && @$checkMsgIExist->message_id != $overview->msgno)
+                                    {
                                         $checkMsgIExist->message_id = @$overview->msgno;
                                         $checkMsgIExist->meeting_title = @$event->summary;
                                         $checkMsgIExist->meeting_date = date("Y-m-d",strtotime(@$event->dtstart));
@@ -132,18 +149,21 @@ class IcalMeetSync extends Command
                                         $checkMsgIExist->agenda_of_meeting = @$event->description;
                                         $checkMsgIExist->invite_file = @$getResults["filePath"];
                                         $checkMsgIExist->save();
-                                        \Log::info('meeting updated:'.@$checkMsgIExist->id);
+                                        \Log::channel('mailsync')->info('meeting updated:'.@$checkMsgIExist->id);
                                         $deleteOldAtt = Attendee::where('meeting_id',$checkMsgIExist->id)->delete();
                                         $this->addAttendees($attendees,$checkMsgIExist);
                                     }
 
-                                    \Log::info('id already-'.@$checkMsgIExist->id);
+                                    \Log::channel('mailsync')->info('id already-'.@$checkMsgIExist->id);
                                 }
                                 
-                                if (empty($checkMsgIExist)) {
-                                    if(!empty(@$organizer[1])){
+                                if (empty($checkMsgIExist)) 
+                                {
+                                    if(!empty(@$organizer[1]))
+                                    {
                                         $organizerExist = User::where("email",@$organizer[1])->first();
-                                        if (empty($organizerExist)) {
+                                        if (empty($organizerExist)) 
+                                        {
                                             $userInfo = $this->addUser(@$organizer[1]);
                                             $user_id = $userInfo->id;
                                         } else {
@@ -155,7 +175,7 @@ class IcalMeetSync extends Command
                                     }
 
                                     //-Create New meeting in an application---
-                                    $meeting_ref_no = strtoupper(Str::random(2)).rand(10000000,99999999);
+                                    $meeting_ref_no = strtoupper(Str::random(2)).rand(1000,9999);
 
                                     $meeting = new Meeting();
                                     $meeting->message_id = @$overview->msgno;
@@ -171,7 +191,7 @@ class IcalMeetSync extends Command
                                     $meeting->agenda_of_meeting = @$event->description;
                                     $meeting->invite_file = @$getResults["filePath"];
                                     $meeting->save();
-                                    \Log::info('meeting created:'.@$meeting->id);
+                                    \Log::channel('mailsync')->info('meeting created:'.@$meeting->id);
                                     $this->addAttendees($attendees,$meeting);
                                    
                                 }
@@ -182,13 +202,16 @@ class IcalMeetSync extends Command
                 }
             }
         } catch (\Exception $e) {
+            \Log::channel('mailsync')->error($e->getMessage());
+            \Log::channel('emergency')->error($e->getMessage());
             die($e->getMessage());
         }
     }
 
-    function addAttendees($attendees,$meeting)
+    function addAttendees($attendees, $meeting)
     {
-        foreach ($attendees as $key => $attn) {
+        foreach ($attendees as $key => $attn) 
+        {
             $attend = explode(":", @$attn);
             $attendee = @$attend[1];
             $checkUser = User::where("email",$attendee)->first();
@@ -206,7 +229,8 @@ class IcalMeetSync extends Command
             $attende->meeting_id = $meeting->id;
             $attende->user_id = $user_id;
             $attende->save();
-            if (env("IS_MAIL_ENABLE", false) == true) {
+            if (env("IS_MAIL_ENABLE", false) == true) 
+            {
                 $content = [
                     "name" => $name,
                     "meeting_title" =>$meeting->meeting_title,
