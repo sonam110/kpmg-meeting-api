@@ -24,7 +24,7 @@ return new class extends Migration
             $table->string('title')->nullable();
             $table->text('message')->nullable();
             $table->integer('data_id')->nullable();
-            $table->enum('type',['meeting','note','action'])->default(1)->comment('meeting,note,action');
+            $table->enum('type',['meeting','note','action'])->default('meeting')->comment('meeting,note,action');
             $table->string('status_code', 50)->default('success')->nullable()->comment('success, failed, warning, primary, secondary, error, alert, info');
             $table->boolean('read_status')->default(0); 
             $table->timestamp('read_at')->nullable();
