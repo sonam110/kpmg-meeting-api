@@ -49,12 +49,14 @@ class IcalMeetSync extends Command
         \Log::info("i m trigger");
         try {
             File::ensureDirectoryExists("public/ics");
+            $server = env('IMAP_MAIL_SERVER');
+            $port = env('IMAP_MAIL_PORT');
             $incoming_mail_server =
-                "{mail.gofactz.com:993/imap/ssl/novalidate-cert}INBOX";
+                "{mail.".$server.":".$port."/imap/ssl/novalidate-cert}INBOX";
             //This is an example incoming mail server for Gmail which you can configure to your outlook, check out the manual on Supported IMAP client list below.
 
-            $your_email = env("CONNECTED_MAIL"); //'erashok23@outlook.com'; // your outlook email ID
-            $yourpassword = env("MAIL_PASSWARD"); //'Ashok_64554@'; // your outlook email password
+            $your_email = env("IMAP_CONNECTED_MAIL"); //'erashok23@outlook.com'; // your outlook email ID
+            $yourpassword = env("IMAP_MAIL_PASSWARD"); //'Ashok_64554@'; // your outlook email password
 
             ($mbox = imap_open(
                 $incoming_mail_server,
