@@ -5,6 +5,8 @@
 /public/reports
 /public/export
 /public/uploads
+/public/user/import
+/public/user
 /public/certificates
 /storage/*.key
 /vendor
