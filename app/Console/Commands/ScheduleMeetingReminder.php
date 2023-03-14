@@ -40,23 +40,24 @@ class ScheduleMeetingReminder extends Command
             $current_time = strtotime(date('H:i:00.000000'));
             if(($meeting_time_start <= $check_time) && $meeting_time_start >= $current_time)
             {
-                $content = [
-                    "name" => @$meeting->user->name,
-                    "meeting_title" => @$meeting->meeting_title,
-                    "meeting_date" => @$meeting->meeting_date,
+                // $content = [
+                //     "name" => @$meeting->user->name,
+                //     "meeting_title" => @$meeting->meeting_title,
+                //     "meeting_date" => @$meeting->meeting_date,
 
-                    "meeting_time" => @$meeting->meeting_time,
-                    "agenda_of_meeting" => @$meeting->agenda_of_meeting,
+                //     "meeting_time" => @$meeting->meeting_time,
+                //     "agenda_of_meeting" => @$meeting->agenda_of_meeting,
                
 
-                ];
+                // ];
+                $body = 'Hi '.@$meeting->user->name.', Meeting '.@$meeting->meeting_title.' has been scheduled on '.@$meeting->meeting_date.' '.@$meeting->meeting_time.' for '.@$meeting->agenda_of_meeting.'.';
                 $attendees = $meeting->attendees;
                 foreach ($attendees as $key => $attendee) {
                     if (env('IS_MAIL_ENABLE', false) == true) {
                         $mailLogData = MeetingMailLog::where('meeting_id',$meeting->id)->where('user_id',$attendee->user_id)->first();
                         if(empty($mailLogData))
                         {
-                            $recevier = Mail::to(@$attendee->user->email)->send(new scheduleMeetingMail($content));
+                            $recevier = Mail::to(@$attendee->user->email)->send(new scheduleMeetingMail($body));
                             if($recevier == true)
                             {
                                 $meetingMailLog = new MeetingMailLog;

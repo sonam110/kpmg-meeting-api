@@ -13,15 +13,15 @@ class scheduleMeetingMail extends Mailable
 {
    use Queueable,SerializesModels;
 
-    public $content;
+    public $body;
 
     /**
      * Create a new message instance.
      *
      * @return void
      */
-    public function __construct($content) {
-        $this->content = $content;
+    public function __construct($body) {
+        $this->body = $body;
     }
 
     /**
@@ -30,9 +30,9 @@ class scheduleMeetingMail extends Mailable
      * @return $this
      */
     public function build() {
-        return $this->markdown('email.schedule-meeting-mail')
+        return $this->markdown('email.common-mail')
             ->subject("Meeting Alert!")
             ->from(env('MAIL_FROM_ADDRESS','support@kpmg.in'),'KPMG Team')
-            ->with($this->content);
+            ->with($this->body);
     }
 }
