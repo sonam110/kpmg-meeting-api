@@ -50,6 +50,7 @@ class MailSyncController extends Controller
             foreach ($result as $overview) {
                 $creation_date = date('Y-m-d',strtotime($overview->date));
                 $checkMsgIExist = Meeting::where("message_id",$overview->msgno)->where('created_at',$creation_date)->first();
+                \Log::info('id'.@$checkMsgIExist->id);
                 if (empty($checkMsgIExist)) {
                     $getResults = $this->getmsg($mbox, $overview->msgno);
                     $randomNo = generateRandomNumber(10);
@@ -57,7 +58,7 @@ class MailSyncController extends Controller
                     preg_match_all("#\bhttps?://[^,\s()<>]+(?:\([\w\d]+\)|([^,[:punct:]\s]|/))#", $message,$match);
                     $meeting_links = @$match[0];
                     $from = trim(substr($overview->from, 0, 16));
-                    
+                     \Log::info($path);
                     if (@$getResults["filePath"]) {
                         $ical = new ICal($path, [
                             "defaultSpan" => 2, // Default value
@@ -71,7 +72,7 @@ class MailSyncController extends Controller
                         ]);
 
                         $events = $ical->sortEventsWithOrder($ical->events());
-
+                       
                         if (!empty(@$events[0])) {
                             $event = @$events[0];
                             if($event->location=='Microsoft Teams Meeting'){
@@ -113,6 +114,7 @@ class MailSyncController extends Controller
                             $meeting->agenda_of_meeting = @$event->description;
                             $meeting->invite_file = @$getResults["filePath"];
                             $meeting->save();
+                             \Log::info('meeting'.@$meeting->id);
                             foreach ($attendees as $key => $attn) {
                                 $attend = explode(":", @$attn);
                                 $attendee = @$attend[1];
@@ -191,7 +193,7 @@ class MailSyncController extends Controller
         return $result;
     }
 
-    private function getpart($mbox, $mid, $p, $partno)
+    function getpart($mbox, $mid, $p, $partno)
     {
         // $partno = '1', '2', '2.1', '2.1.3', etc for multipart, 0 if simple
         File::ensureDirectoryExists("public/ics");
@@ -210,7 +212,9 @@ class MailSyncController extends Controller
             $data = quoted_printable_decode($data);
         } elseif ($p->encoding == 3) {
             $data = base64_decode($data);
-            file_put_contents("public/ics/" . $fileName, $data);
+            file_put_contents(public_path("ics/" . $fileName), $data);
+
+           // file_put_contents("public/ics/" . $fileName, $data);
         }
 
         // PARAMETERS

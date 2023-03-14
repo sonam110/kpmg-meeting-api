@@ -69,6 +69,7 @@ class IcalMeetSync extends Command
             foreach ($result as $overview) {
                 $creation_date = date('Y-m-d',strtotime($overview->date));
                 $checkMsgIExist = Meeting::where("message_id",$overview->msgno)->where('created_at',$creation_date)->first();
+                \Log::info('id'.@$checkMsgIExist->id);
                 if (empty($checkMsgIExist)) {
                     $getResults = $this->getmsg($mbox, $overview->msgno);
                     $randomNo = generateRandomNumber(10);
@@ -76,7 +77,7 @@ class IcalMeetSync extends Command
                     preg_match_all("#\bhttps?://[^,\s()<>]+(?:\([\w\d]+\)|([^,[:punct:]\s]|/))#", $message,$match);
                     $meeting_links = @$match[0];
                     $from = trim(substr($overview->from, 0, 16));
-                    
+                     \Log::info($path);
                     if (@$getResults["filePath"]) {
                         $ical = new ICal($path, [
                             "defaultSpan" => 2, // Default value
@@ -90,7 +91,7 @@ class IcalMeetSync extends Command
                         ]);
 
                         $events = $ical->sortEventsWithOrder($ical->events());
-
+                       
                         if (!empty(@$events[0])) {
                             $event = @$events[0];
                             if($event->location=='Microsoft Teams Meeting'){
@@ -132,6 +133,7 @@ class IcalMeetSync extends Command
                             $meeting->agenda_of_meeting = @$event->description;
                             $meeting->invite_file = @$getResults["filePath"];
                             $meeting->save();
+                             \Log::info('meeting'.@$meeting->id);
                             foreach ($attendees as $key => $attn) {
                                 $attend = explode(":", @$attn);
                                 $attendee = @$attend[1];
@@ -228,7 +230,9 @@ class IcalMeetSync extends Command
             $data = quoted_printable_decode($data);
         } elseif ($p->encoding == 3) {
             $data = base64_decode($data);
-            file_put_contents("public/ics/" . $fileName, $data);
+            file_put_contents(public_path("ics/" . $fileName), $data);
+
+           // file_put_contents("public/ics/" . $fileName, $data);
         }
 
         // PARAMETERS
