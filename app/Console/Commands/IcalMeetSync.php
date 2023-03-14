@@ -122,6 +122,7 @@ class IcalMeetSync extends Command
                                         $checkMsgIExist->delete();
                                     }
                                     if($event->status=='CONFIRMED' && @$checkMsgIExist->message_id != $overview->msgno){
+                                        $checkMsgIExist->message_id = @$overview->msgno;
                                         $checkMsgIExist->meeting_title = @$event->summary;
                                         $checkMsgIExist->meeting_date = date("Y-m-d",strtotime(@$event->dtstart));
                                         $checkMsgIExist->meeting_time_start = date("H:i:s",strtotime(@$event->dtstart));
