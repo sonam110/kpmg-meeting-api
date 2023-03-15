@@ -63,7 +63,7 @@ class IcalMeetSync extends Command
             if(!$mbox)
             {
                 \Log::channel('mailsync')->error("can't connect: " . imap_last_error());
-                \Log::channel('emergency')->error("can't connect: " . imap_last_error());
+                \Log::error("can't connect: " . imap_last_error());
                 die;
             }
 
@@ -203,7 +203,7 @@ class IcalMeetSync extends Command
             }
         } catch (\Exception $e) {
             \Log::channel('mailsync')->error($e->getMessage());
-            \Log::channel('emergency')->error($e->getMessage());
+            \Log::error($e->getMessage());
             die($e->getMessage());
         }
     }
