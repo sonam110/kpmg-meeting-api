@@ -92,7 +92,7 @@ class IcalMeetSync extends Command
                         preg_match_all("#\bhttps?://[^,\s()<>]+(?:\([\w\d]+\)|([^,[:punct:]\s]|/))#", $message,$match);
                         $meeting_links = @$match[0];
                         $from = trim(substr($overview->from, 0, 16));
-                         \Log::info($path);
+                        \Log::channel('mailsync')->info($path);
                         if (@$getResults["filePath"]) 
                         {
                             $ical = new ICal($path, [

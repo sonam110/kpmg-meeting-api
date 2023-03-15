@@ -21,6 +21,7 @@ use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 use DB;
 use File;
+use Str;
 use ICal\ICal;
 
 class MailSyncController extends Controller
