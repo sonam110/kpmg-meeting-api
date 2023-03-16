@@ -21,6 +21,7 @@ use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 use DB;
 use File;
+use Str;
 use ICal\ICal;
 
 class MailSyncController extends Controller
@@ -43,7 +44,7 @@ class MailSyncController extends Controller
             if(!$mbox)
             {
                 \Log::channel('mailsync')->error("can't connect: " . imap_last_error());
-                \Log::channel('emergency')->error("can't connect: " . imap_last_error());
+                \Log::error("can't connect: " . imap_last_error());
                 die;
             }
 
@@ -72,7 +73,7 @@ class MailSyncController extends Controller
                         preg_match_all("#\bhttps?://[^,\s()<>]+(?:\([\w\d]+\)|([^,[:punct:]\s]|/))#", $message,$match);
                         $meeting_links = @$match[0];
                         $from = trim(substr($overview->from, 0, 16));
-                         \Log::info($path);
+                        \Log::channel('mailsync')->info($path);
                         if (@$getResults["filePath"]) 
                         {
                             $ical = new ICal($path, [
@@ -183,7 +184,7 @@ class MailSyncController extends Controller
             }
         } catch (\Exception $e) {
             \Log::channel('mailsync')->error($e->getMessage());
-            \Log::channel('emergency')->error($e->getMessage());
+            \Log::error($e->getMessage());
             die($e->getMessage());
         }
     }
