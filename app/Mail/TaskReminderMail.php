@@ -30,7 +30,7 @@ class TaskReminderMail extends Mailable
      * @return $this
      */
     public function build() {
-        return $this->markdown('email.task-reminder-mail')
+        return $this->markdown('email.common-mail')
             ->subject("Task-Reminder Alert!")
             ->from(env('MAIL_FROM_ADDRESS','support@kpmg.in'),'KPMG Team')
             ->with($this->content);

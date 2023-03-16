@@ -108,7 +108,8 @@ class AuthController extends Controller
             $baseRedirURL = env('APP_URL');
             $content = [
                 "name" => $user->fullname,
-                "passowrd_link" => $baseRedirURL.'/authentication/reset-password/'.$token
+                // "passowrd_link" => $baseRedirURL.'/authentication/reset-password/'.$token,
+                "body" => 'This email is to confirm a recent password reset request for your account. To confirm this request and reset your password Please click below link <br><br><center> <a href='.$baseRedirURL.'/authentication/reset-password/'.$token.' style="color: #000;font-size: 18px;text-decoration: underline, font-family: Roboto Condensed, sans-serif;"  target="_blank">Reset your password </a></center>',
             ];
 
             if (env('IS_MAIL_ENABLE', false) == true) {

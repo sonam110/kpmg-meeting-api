@@ -214,11 +214,7 @@ class MeetingController extends Controller
                     if (env('IS_MAIL_ENABLE', false) == true) {
                         $content = [
                             "name" =>$name,
-                            "meeting_title" => $request->meeting_title,
-                            "meeting_date" => $request->meeting_date,
-                            "meeting_time_start" => $request->meeting_time_start,
-                            "meeting_time_end" => $request->meeting_time_end,
-                            "agenda_of_meeting" => $request->agenda_of_meeting,
+                            "body" => 'Meeting '.$request->meeting_title.' has been scheduled on '.$request->meeting_date.' between '.$request->meeting_time_start.'-'.$request->meeting_time_end.' for '.$request->agenda_of_meeting.'.',
                    
                         ];
                         $recevier = Mail::to($attendee['email'])->send(new MeetingMail($content));

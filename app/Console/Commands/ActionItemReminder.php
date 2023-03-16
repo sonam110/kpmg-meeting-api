@@ -38,7 +38,7 @@ class ActionItemReminder extends Command
             $user = User::find($value->owner_id);
             $content = [
                 "name" => @$user->name,
-                "meeting_title" => @$value->meeting->meeting_title,
+                "body" => 'Your Assigned Task for meeting  '.@$value->meeting->meeting_title.' has not completed yet.',
             ];
 
             if (env('IS_MAIL_ENABLE', false) == true) {

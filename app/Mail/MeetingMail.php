@@ -30,7 +30,7 @@ class MeetingMail extends Mailable
      * @return $this
      */
     public function build() {
-        return $this->markdown('email.meeting-mail')
+        return $this->markdown('email.common-mail')
             ->subject("New Meeting schedule!")
             ->from(env('MAIL_FROM_ADDRESS','support@kpmg.in'),'KPMG Team')
             ->with($this->content);

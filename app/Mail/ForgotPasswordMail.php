@@ -28,7 +28,7 @@ class ForgotPasswordMail extends Mailable
      * @return $this
      */
     public function build() {
-        return $this->markdown('email.forgotPassword')
+        return $this->markdown('email.common-mail')
                         ->subject('Forgot Your Account Password!')
                         ->from(env('MAIL_FROM_ADDRESS','support@kpmg.in'),'KPMG Team')
                         ->with($this->content);

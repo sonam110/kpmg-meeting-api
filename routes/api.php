@@ -2,13 +2,6 @@
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\API\Admin\UserController;
-use App\Http\Controllers\API\Common\MeetingController;
-use App\Http\Controllers\API\Common\NotesController;
-use App\Http\Controllers\API\Common\ActionItemController;
-use App\Http\Controllers\API\Common\RoleController;
-use App\Http\Controllers\API\Common\DashboardController;
-use App\Http\Controllers\API\Admin\AppSettingController;
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -46,14 +39,17 @@ Route::namespace('App\Http\Controllers\API\Common')->group(function () {
             Route::post('change-password', 'changePassword')->name('changePassword');
         });
 
-        Route::post('dashboard',[DashboardController::class, 'dashboard'])->name('dashboard');
-        Route::post('test-function',[DashboardController::class, 'test'])->name('test-function');
+        Route::controller(DashboardController::class)->group(function () {
+            Route::post('dashboard','dashboard')->name('dashboard');
+            Route::post('test-function','test')->name('test-function');
+        });
 
         /*----------Roles------------------------------*/
-        Route::post('roles',[RoleController::class, 'roles'])->name('roles');
-        Route::resource('role', RoleController::class)->only([
-            'store','destroy','show', 'update'
-        ]);
+        Route::controller(RoleController::class)->group(function () {
+            Route::post('roles', 'roles')->name('roles');
+            Route::apiResource('role', RoleController::class)->only(['store','destroy','show', 'update']);
+        });
+
 
         Route::controller(FileUploadController::class)->group(function () {
             Route::post('file-uploads', 'fileUploads')->name('file-uploads');
