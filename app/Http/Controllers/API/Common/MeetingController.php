@@ -197,7 +197,7 @@ class MeetingController extends Controller
                     $checkUser = User::where('email',$attendee['email'])->first();
                     /*---------Add User---------------------*/
                     if(empty($checkUser)){
-                        $userInfo = $this->addUser($attendee['email']);
+                        $userInfo = addUser($attendee['email']);
                         $user_id = $userInfo->id;
                         $name = $userInfo->name;
                     } else{
@@ -214,7 +214,7 @@ class MeetingController extends Controller
                     if (env('IS_MAIL_ENABLE', false) == true) {
                         $content = [
                             "name" =>$name,
-                            "body" => 'Meeting '.$request->meeting_title.' has been scheduled on '.$request->meeting_date.' between '.$request->meeting_time_start.'-'.$request->meeting_time_end.' for '.$request->agenda_of_meeting.'.',
+                            "body" => 'Meeting '.$request->meeting_title.' has been scheduled on '.$request->meeting_date.' between '.$request->meeting_time_start.' - '.$request->meeting_time_end.' for '.$request->agenda_of_meeting.'.',
                    
                         ];
                         $recevier = Mail::to($attendee['email'])->send(new MeetingMail($content));
@@ -265,66 +265,6 @@ class MeetingController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function addUser($email)
-    {
-        $randomNo = generateRandomNumber(10);
-        $password = Hash::make($randomNo);
-        $masterUser = new MasterUser;
-        $masterUser->name = $email;
-        $masterUser->email  = $email;
-        $masterUser->password = $password;
-        $masterUser->save();
-
-        $user = new User;
-        $user->id = $masterUser->id;
-        $user->role_id = '2';
-        $user->name = $email;
-        $user->email  = $email;
-        $user->password = $password;
-        $user->created_by = auth()->user()->id;
-        $user->save();
-
-        //Delete if entry exists
-        DB::table('password_resets')->where('email', $email)->delete();
-
-        $token = \Str::random(64);
-        DB::table('password_resets')->insert([
-          'email' => $email, 
-          'token' => $token, 
-          'created_at' => Carbon::now()
-        ]);
-
-        $baseRedirURL = env('APP_URL');
-        $content = [
-            "name" => $user->name,
-            "email" => $user->email,
-            "password" => $randomNo,
-            "passowrd_link" => $baseRedirURL.'/authentication/reset-password/'.$token
-        ];
-
-        if (env('IS_MAIL_ENABLE', false) == true) {
-           
-            $recevier = Mail::to($email)->send(new WelcomeMail($content));
-        }
-
-        /*-------Assigne Meeting module for this user*/
-        $assigneModule = new AssigneModule;
-        $assigneModule->module_id  = '1';
-        $assigneModule->user_id  = $masterUser->id;
-        $assigneModule->save();
-
-    
-        //Role and permission sync
-        $role = Role::where('id','2')->first();
-        $permissions = $role->permissions->pluck('name');
-        
-        $user->assignRole($role->name);
-        foreach ($permissions as $key => $permission) {
-            $user->givePermissionTo($permission);
-        }
-        return $user;
-
-    }
     public function show($id)
     {
         try {
@@ -402,7 +342,7 @@ class MeetingController extends Controller
                     $checkUser = User::where('email',$attendee['email'])->first();
                     /*---------Add User---------------------*/
                     if(empty($checkUser)){
-                        $userInfo = $this->addUser($attendee['email']);
+                        $userInfo = addUser($attendee['email']);
                         $user_id = $userInfo->id;
                     } else{
                         $user_id = $checkUser->id;

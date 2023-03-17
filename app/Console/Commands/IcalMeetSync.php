@@ -154,7 +154,7 @@ class IcalMeetSync extends Command
                                         $this->addAttendees($attendees,$checkMsgIExist);
                                     }
 
-                                    \Log::channel('mailsync')->info('id already-'.@$checkMsgIExist->id);
+                                    \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\Log::channel('mailsync')->info('id already-'.@$checkMsgIExist->id);
                                 }
                                 
                                 if (empty($checkMsgIExist)) 
@@ -164,7 +164,7 @@ class IcalMeetSync extends Command
                                         $organizerExist = User::where("email",@$organizer[1])->first();
                                         if (empty($organizerExist)) 
                                         {
-                                            $userInfo = $this->addUser(@$organizer[1]);
+                                            $userInfo = addUser(@$organizer[1]);
                                             $user_id = $userInfo->id;
                                         } else {
                                             $user_id = $organizerExist->id;
@@ -180,10 +180,7 @@ class IcalMeetSync extends Command
                                     $meeting = new Meeting();
                                     $meeting->message_id = @$overview->msgno;
                                     $meeting->meetRandomId =  generateRandomNumber(14);
-                                    $meeting->meeting_ref_no =  $meeting_ref_no;
-                                    $meeting->organised_by = $user_id;
-                                    $meeting->meeting_title = @$event->summary;
-                                    $meeting->meeting_link = $meeting_link;
+                                    $meeting->meeting_ref_no =  $meeting_ref_no;                                    $meeting->organised_by = $user_id;?                                    $meeting->meeting_link = $meeting_link;
                                     $meeting->meeting_uid = @$event->uid;
                                     $meeting->meeting_date = date("Y-m-d",strtotime(@$event->dtstart));
                                     $meeting->meeting_time_start = date("H:i:s",strtotime(@$event->dtstart));
@@ -217,7 +214,7 @@ class IcalMeetSync extends Command
             $checkUser = User::where("email",$attendee)->first();
             /*---------Add User---------------------*/
             if (empty($checkUser)) {
-                $userInfo = $this->addUser($attendee);
+                $userInfo = addUser($attendee);
                 $user_id = $userInfo->id;
                 $name = $userInfo->name;
             } else {
@@ -376,66 +373,5 @@ class IcalMeetSync extends Command
             "fileName" => $fileName,
             "filePath" => "ics/" . $fileName,
         ];
-    }
-
-    public function addUser($email)
-    {
-        $randomNo = generateRandomNumber(10);
-        $password = Hash::make($randomNo);
-        $masterUser = new MasterUser();
-        $masterUser->name = $email;
-        $masterUser->email = $email;
-        $masterUser->password = $password;
-        $masterUser->save();
-
-        $user = new User();
-        $user->id = $masterUser->id;
-        $user->role_id = "2";
-        $user->name = $email;
-        $user->email = $email;
-        $user->password = $password;
-        $user->created_by = auth()->user()->id;
-        $user->save();
-
-        //Delete if entry exists
-        DB::table("password_resets")
-            ->where("email", $email)
-            ->delete();
-
-        $token = \Str::random(64);
-        DB::table("password_resets")->insert([
-            "email" => $email,
-            "token" => $token,
-            "created_at" => Carbon::now(),
-        ]);
-
-        $baseRedirURL = env("APP_URL");
-        $content = [
-            "name" => $user->name,
-            "email" => $user->email,
-            "password" => $randomNo,
-            "passowrd_link" =>
-                $baseRedirURL . "/authentication/reset-password/" . $token,
-        ];
-
-        if (env("IS_MAIL_ENABLE", false) == true) {
-            $recevier = Mail::to($email)->send(new WelcomeMail($content));
-        }
-
-        /*-------Assigne Meeting module for this user*/
-        $assigneModule = new AssigneModule();
-        $assigneModule->module_id = "1";
-        $assigneModule->user_id = $masterUser->id;
-        $assigneModule->save();
-
-        //Role and permission sync
-        $role = Role::where("id", "2")->first();
-        $permissions = $role->permissions->pluck("name");
-
-        $user->assignRole($role->name);
-        foreach ($permissions as $key => $permission) {
-            $user->givePermissionTo($permission);
-        }
-        return $user;
     }
 }

@@ -28,7 +28,7 @@ class WelcomeMail extends Mailable
      * @return $this
      */
     public function build() {
-        return $this->markdown('email.welcome-mail')
+        return $this->markdown('email.common-mail')
             ->from(env('MAIL_FROM_ADDRESS','support@kpmg.in'),'KPMG Team')
             ->subject('Welcome to KPMG')
             ->with($this->content);
