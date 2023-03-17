@@ -154,7 +154,7 @@ class IcalMeetSync extends Command
                                         $this->addAttendees($attendees,$checkMsgIExist);
                                     }
 
-                                    \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\Log::channel('mailsync')->info('id already-'.@$checkMsgIExist->id);
+                                    Log::channel('mailsync')->info('id already-'.@$checkMsgIExist->id);
                                 }
                                 
                                 if (empty($checkMsgIExist)) 
@@ -180,7 +180,10 @@ class IcalMeetSync extends Command
                                     $meeting = new Meeting();
                                     $meeting->message_id = @$overview->msgno;
                                     $meeting->meetRandomId =  generateRandomNumber(14);
-                                    $meeting->meeting_ref_no =  $meeting_ref_no;                                    $meeting->organised_by = $user_id;?                                    $meeting->meeting_link = $meeting_link;
+                                    $meeting->meeting_ref_no =  $meeting_ref_no;
+                                    $meeting->organised_by = $user_id;
+                                    $meeting->meeting_title = @$event->summary;
+                                    $meeting->meeting_link = $meeting_link;
                                     $meeting->meeting_uid = @$event->uid;
                                     $meeting->meeting_date = date("Y-m-d",strtotime(@$event->dtstart));
                                     $meeting->meeting_time_start = date("H:i:s",strtotime(@$event->dtstart));

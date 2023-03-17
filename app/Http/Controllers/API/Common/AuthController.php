@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use App\Models\User;
+use App\Models\Otp;
+use App\Models\LoginLog;
 use Illuminate\Support\Str;
 use Carbon\Carbon;
 use Auth;
@@ -14,6 +16,7 @@ use Exception;
 use Mail;
 use Spatie\Permission\Models\Permission;
 use App\Mail\ForgotPasswordMail;
+use App\Mail\VerifyOtpMail;
 use Spatie\Permission\Models\Role;
 class AuthController extends Controller
 {
@@ -40,16 +43,73 @@ class AuthController extends Controller
             }
 
             if(Hash::check($request->password, $user->password)) {
-                $accessToken = $user->createToken('authToken')->accessToken;
-                $user['access_token'] = $accessToken;
-                $role   = Role::where('id', $user->role_id)->first();
-                $user['roles']    = $role;
-                $user['permissions']  = $role->permissions()->select('id','name as action','group_name as subject','se_name')->get();
+                $otpSend = rand(1000,9999);
+                $otp = new Otp;
+                $otp->email = $email;
+                $otp->otp =  base64_encode($otpSend);
+                $otp->save();
 
-                return response()->json(prepareResult(false, $user, trans('translate.request_successfully_submitted')),config('httpcodes.success'));
+                $baseRedirURL = env('APP_URL');
+                $content = [
+                    "name" => $user->name,
+                    // "passowrd_link" => $baseRedirURL.'/authentication/reset-password/'.$token,
+                    "body" => 'your verification otp is : '.$otpSend,
+                ];
+
+                if (env('IS_MAIL_ENABLE', false) == true) {
+                   
+                    $recevier = Mail::to($request->email)->send(new VerifyOtpMail($content));
+                }
+
+
+                // $accessToken = $user->createToken('authToken')->accessToken;
+                // $user['access_token'] = $accessToken;
+                // $role   = Role::where('id', $user->role_id)->first();
+                // $user['roles']    = $role;
+                // $user['permissions']  = $role->permissions()->select('id','name as action','group_name as subject','se_name')->get();
+
+                return response()->json(prepareResult(false, [$email,$otpSend], trans('translate.otp_sent')),config('httpcodes.success'));
             } else {
                 return response()->json(prepareResult(true, [], trans('translate.invalid_username_and_password')),config('httpcodes.unauthorized'));
             }
+        } catch (\Throwable $e) {
+            \Log::error($e);
+            return response()->json(prepareResult(true, $e->getMessage(), trans('translate.something_went_wrong')), config('httpcodes.internal_server_error'));
+        }
+    }
+
+    public function verifyOtp(Request $request)
+    {
+        $validation = \Validator::make($request->all(),[ 
+            'otp'     => 'required',
+        ]);
+
+        if ($validation->fails()) {
+            return response()->json(prepareResult(true, $validation->messages(), $validation->messages()->first()), config('httpcodes.bad_request'));
+        }
+
+        try {
+            $email = $request->email;
+            $otpCheck = Otp::where('email',$email)->where('otp',base64_encode($request->otp))->first();
+            if (!$otpCheck)  {
+                return response()->json(prepareResult(true, [], trans('translate.otp_invalid')), config('httpcodes.not_found'));
+            }
+            elseif((strtotime($otpCheck->created_at) + 600) < strtotime(date('Y-m-d H:i:s')))
+            {
+                return response()->json(prepareResult(true, [], trans('translate.otp_expired')), config('httpcodes.not_found'));
+            }
+            $user = User::select('*')->where('email', $email)->first();
+            $accessToken = $user->createToken('authToken')->accessToken;
+            $user['access_token'] = $accessToken;
+            $role   = Role::where('id', $user->role_id)->first();
+            $user['roles']    = $role;
+            $user['permissions']  = $role->permissions()->select('id','name as action','group_name as subject','se_name')->get();
+
+            $log = new LoginLog;
+            $log->user_id = $user->id;
+            $log->save();
+
+            return response()->json(prepareResult(false, $user, trans('translate.request_successfully_submitted')),config('httpcodes.success'));
         } catch (\Throwable $e) {
             \Log::error($e);
             return response()->json(prepareResult(true, $e->getMessage(), trans('translate.something_went_wrong')), config('httpcodes.internal_server_error'));

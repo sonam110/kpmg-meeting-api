@@ -686,4 +686,7 @@ return [
     "read"=>"Notification Read!",
     "all_read"=>"Notification Read All!",
     "fetched_count"=>"Fetched Count!",
+    "otp_sent"=>"Otp Sent!",
+    "invalid_otp"=>"Otp Invalid!",
+    "otp_expired"=>"Otp Expired!",
 ];

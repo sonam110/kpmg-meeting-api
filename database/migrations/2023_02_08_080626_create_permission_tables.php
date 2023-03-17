@@ -25,6 +25,10 @@ class CreatePermissionTables extends Migration
             $table->bigIncrements('id');
             $table->string('name');
             $table->string('guard_name');
+            $table->string('se_name')->unique();
+            $table->string('group_name')->nullable();
+            $table->text('description')->nullable();
+            $table->tinyInteger('belongs_to')->default(1)->comment('1:Admin,2:User,3:Both');
             $table->timestamps();
         });
 
@@ -32,6 +36,8 @@ class CreatePermissionTables extends Migration
             $table->bigIncrements('id');
             $table->string('name');
             $table->string('guard_name');
+            $table->string('se_name');
+            $table->boolean('is_default')->default(0)->comment('1:Set Default role');
             $table->timestamps();
         });
 
