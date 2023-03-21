@@ -29,7 +29,7 @@ return [
     'updated' => 'Record successfully updated.',
     'deleted' => 'Record successfully deleted.',
     'active' => 'Activated successfully.',
-    'inactive' => 'InActivated successfully.',
+    'inactive' => 'De-Activated successfully.',
     'pending' => 'Status Pending Updated successfully.',
     'in_process' => 'Status In-Process Updated successfully.',
     'completed' => 'Status Completed Updated successfully.',
