@@ -36,6 +36,9 @@ class AuthController extends Controller
         try {
             $email = $request->email;
             $user = User::select('*')->where('email', $email)->first();
+            if (!$user)  {
+                return response()->json(prepareResult(true, [], trans('translate.user_not_exist')), config('httpcodes.not_found'));
+            }
             $loginCheck = DB::table('oauth_access_tokens')->where('user_id', $user->id)->first();
             if(!empty($loginCheck))
             {
@@ -47,9 +50,6 @@ class AuthController extends Controller
                 {
                     return response()->json(prepareResult(true, ['is_logged_in'=> true], trans('translate.user_already_logged_in')), config('httpcodes.not_found'));
                 }
-            }
-            if (!$user)  {
-                return response()->json(prepareResult(true, [], trans('translate.user_not_exist')), config('httpcodes.not_found'));
             }
 
             if(in_array($user->status, [0,2])) {
@@ -77,15 +77,6 @@ class AuthController extends Controller
 
                     $recevier = Mail::to($request->email)->send(new VerifyOtpMail($content));
                 }
-
-
-                // $accessToken = $user->createToken('authToken')->accessToken;
-                // $user['access_token'] = $accessToken;
-                // $role   = Role::where('id', $user->role_id)->first();
-                // $user['roles']    = $role;
-                // $user['permissions']  = $role->permissions()->select('id','name as action','group_name as subject','se_name')->get();
-
-                // return [$email,$otpSend];
 
                 return response()->json(prepareResult(false, [], trans('translate.otp_sent')),config('httpcodes.success'));
             } else {

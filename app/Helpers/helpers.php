@@ -101,7 +101,7 @@ function validatePassword($val) {
         array_push($re, true);
       }
   }
-  return count($re);
+  return count($re)>=3;
 }
 
 
