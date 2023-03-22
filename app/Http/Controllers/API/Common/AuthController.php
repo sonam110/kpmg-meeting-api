@@ -272,15 +272,18 @@ class AuthController extends Controller
 
             if(empty(validatePassword($request->password)))
             {
-                $mess = 'Must contain any three of the following four qualities: Uppercase characters, Lowercase characters, Alpha-numeric characters, and special characters (e.g., #*&% etc.)';
-                return response()->json(prepareResult(true, [], $mess), config('httpcodes.bad_request'));
+                return response()->json(prepareResult(true, [], trans('translate.password_format_invalid')), config('httpcodes.bad_request'));
+            }
+
+            if(Hash::check($request->password, $user->password)) {
+                return response()->json(prepareResult(true, ['password_denied'=>true], trans('translate.chhose_other_password')), config('httpcodes.bad_request'));
             }           
 
             if(in_array($user->status, [0,2])) {
                 return response()->json(prepareResult(true, [], trans('translate.account_is_inactive')), config('httpcodes.unauthorized'));
             }
 
-            $user = User::where('email', $tokenExist->email)
+            User::where('email', $tokenExist->email)
             ->update(['password' => Hash::make($request->password),'password_last_updated' => date('Y-m-d')]);
 
             DB::table('password_resets')->where(['email'=> $tokenExist->email])->delete();
@@ -305,32 +308,36 @@ class AuthController extends Controller
 
     public function changePassword(Request $request)
     {
-        if(auth()->user()->role_id == 1)
-        {
-            $validation = \Validator::make($request->all(),[ 
-                'old_password'  => 'required',
-                'password'      => 'required|min:15'
-            ]);
-        }
-        else
-        {
-            $validation = \Validator::make($request->all(),[ 
-                'old_password'  => 'required',
-                'password'      => 'required|min:8'
-            ]);
-        }
-        if ($validation->fails()) {
-            return response()->json(prepareResult(true, $validation->messages(), $validation->messages()->first()), config('httpcodes.bad_request'));
-        }
-
-        if(empty(validatePassword($request->password)))
-        {
-            $mess = 'Must contain any three of the following four qualities: Uppercase characters, Lowercase characters, Alpha-numeric characters, and special characters (e.g., #*&% etc.)';
-            return response()->json(prepareResult(true, [], $mess), config('httpcodes.bad_request'));
-        }
-
         try 
         {
+
+            if(auth()->user()->role_id == 1)
+            {
+                $validation = \Validator::make($request->all(),[ 
+                    'old_password'  => 'required',
+                    'password'      => 'required|min:15'
+                ]);
+            }
+            else
+            {
+                $validation = \Validator::make($request->all(),[ 
+                    'old_password'  => 'required',
+                    'password'      => 'required|min:8'
+                ]);
+            }
+            if ($validation->fails()) {
+                return response()->json(prepareResult(true, $validation->messages(), $validation->messages()->first()), config('httpcodes.bad_request'));
+            }
+
+            if(empty(validatePassword($request->password)))
+            {
+                return response()->json(prepareResult(true, [], trans('translate.password_format_invalid')), config('httpcodes.bad_request'));
+            }
+
+            if(Hash::check($request->password, auth()->user()->password)) {
+                return response()->json(prepareResult(true, ['password_denied'=>true], trans('translate.chhose_other_password')), config('httpcodes.bad_request'));
+            }
+
             $user = Auth::user();  
             if(in_array($user->status, [0,2])) {
                 return response()->json(prepareResult(true, [], trans('translate.account_is_inactive')), config('httpcodes.unauthorized'));
