@@ -18,6 +18,7 @@ class Kernel extends ConsoleKernel
         Commands\ScheduleMeetingReminder::class,
         Commands\ActionItemReminder::class,
         Commands\IcalMeetSync::class,
+        Commands\UpdatePassword::class,
     ];
 
     protected function schedule(Schedule $schedule)
@@ -32,6 +33,10 @@ class Kernel extends ConsoleKernel
 
         $schedule->command('ical-mail:sync')
         ->everyMinute()
+        ->timezone(env('TIME_ZONE', 'Asia/Calcutta'));
+
+        $schedule->command('update:password')
+        ->dailyAt('09:00 AM')
         ->timezone(env('TIME_ZONE', 'Asia/Calcutta'));
     }
 

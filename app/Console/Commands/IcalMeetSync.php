@@ -10,6 +10,7 @@ use App\Models\User;
 use App\Models\MasterUser;
 use App\Models\Module;
 use App\Models\AssigneModule;
+use App\Models\Notification;
 use App\Models\MeetingLog;
 use voku\helper\HtmlDomParser;
 use Mail;
@@ -229,20 +230,40 @@ class IcalMeetSync extends Command
             $attende->meeting_id = $meeting->id;
             $attende->user_id = $user_id;
             $attende->save();
-            if (env("IS_MAIL_ENABLE", false) == true) 
-            {
-                $content = [
-                    "name" => $name,
-                    "meeting_title" =>$meeting->meeting_title,
-                    "meeting_date" => $meeting->meeting_date,
-                    "meeting_time" =>$meeting->meeting_time_start,
-                    "agenda_of_meeting" =>$meeting->agenda_of_meeting,
-                ];
+            // if (env("IS_MAIL_ENABLE", false) == true) 
+            // {
+            //     $content = [
+            //         "name" => $name,
+            //         "meeting_title" =>$meeting->meeting_title,
+            //         "meeting_date" => $meeting->meeting_date,
+            //         "meeting_time" =>$meeting->meeting_time_start,
+            //         "agenda_of_meeting" =>$meeting->agenda_of_meeting,
+            //     ];
 
-                $recevier = Mail::to($attendee)->send(
-                    new MeetingMail($content)
-                );
+            //     $recevier = Mail::to($attendee)->send(
+            //         new MeetingMail($content)
+            //     );
+            // }
+
+            if (env('IS_MAIL_ENABLE', false) == true) {
+                $content = [
+                    "name" =>$name,
+                    "body" => 'Meeting '.$meeting->meeting_title.' has been scheduled on '.$meeting->meeting_date.' between '.$meeting->meeting_time_start.' - '.$meeting->meeting_time_end.' for '.$meeting->agenda_of_meeting.'.',
+            
+                ];
+                $recevier = Mail::to($attendee)->send(new MeetingMail($content));
             }
+
+            $notification = new Notification;
+            $notification->user_id              = $user_id;
+            $notification->sender_id            = $meeting->organised_by;
+            $notification->type                 = 'meeting';
+            $notification->status_code          = 'success';
+            $notification->title                = 'New Meeting Invitation';
+            $notification->message              = 'New Meting Invitation for Meeting '.$meeting->meeting_title.' which will be held on '.$meeting->meeting_date.' between '.$meeting->meeting_time_start.'-'.$meeting->meeting_time_end.'.';
+            $notification->read_status          = false;
+            $notification->data_id              = $meeting->id;
+            $notification->save();
         }
 
     }

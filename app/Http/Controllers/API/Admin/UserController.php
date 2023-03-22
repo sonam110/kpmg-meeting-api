@@ -12,6 +12,9 @@ use Validator;
 use Auth;
 use Exception;
 use DB;
+use Mail;
+use Str;
+use App\Mail\WelcomeMail;
 use Illuminate\Support\Facades\Hash;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\Models\Permission;
@@ -157,6 +160,28 @@ class UserController extends Controller
             $user->assignRole($role->name);
             foreach ($permissions as $key => $permission) {
                 $user->givePermissionTo($permission);
+            }
+
+            //Delete if entry exists
+            DB::table('password_resets')->where('email', $request->email)->delete();
+
+            $token = \Str::random(64);
+            DB::table('password_resets')->insert([
+              'email' => $request->email, 
+              'token' => $token, 
+              'created_at' => \Carbon\Carbon::now()
+            ]);
+
+            $baseRedirURL = env('APP_URL');
+            // Login credentials are following - email:'.$user->email.' , password:'.$randomNo.'.
+            $content = [
+                "name" => $user->name,
+                "body" => 'You have been registered.<br>To reset your password Please click on the link -> <a href='.$baseRedirURL.'/api/reset-password/'.$token.' style="color: #000;font-size: 18px;text-decoration: underline, font-family: Roboto Condensed, sans-serif;"  target="_blank">Reset your password </a>',
+            ];
+
+            if (env('IS_MAIL_ENABLE', false) == true) {
+               
+                $recevier = Mail::to($request->email)->send(new WelcomeMail($content));
             }
 
             DB::commit();

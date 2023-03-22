@@ -17,6 +17,7 @@ use Exception;
 use Mail;
 use Spatie\Permission\Models\Permission;
 use App\Mail\ForgotPasswordMail;
+use App\Mail\PasswordUpdateMail;
 use App\Mail\VerifyOtpMail;
 use Spatie\Permission\Models\Role;
 class AuthController extends Controller
@@ -44,7 +45,7 @@ class AuthController extends Controller
                 }
                 else
                 {
-                    return response()->json(prepareResult(true, [], trans('translate.user_already_logged_in')), config('httpcodes.not_found'));
+                    return response()->json(prepareResult(true, ['is_logged_in'=> true], trans('translate.user_already_logged_in')), config('httpcodes.not_found'));
                 }
             }
             if (!$user)  {
@@ -188,7 +189,8 @@ class AuthController extends Controller
             return response()->json(prepareResult(true, $validation->messages(), $validation->messages()->first()), config('httpcodes.bad_request'));
         }
 
-        try {
+        try 
+        {
             $user = User::where('email',$request->email)->first();
             if (!$user) {
                 return response()->json(prepareResult(true, [], trans('translate.user_not_exist')), config('httpcodes.not_found'));
@@ -203,16 +205,16 @@ class AuthController extends Controller
 
             $token = Str::random(64);
             DB::table('password_resets')->insert([
-              'email' => $request->email, 
-              'token' => $token, 
-              'created_at' => Carbon::now()
-          ]);
+                  'email' => $request->email, 
+                  'token' => $token, 
+                  'created_at' => Carbon::now()
+              ]);
 
             $baseRedirURL = env('APP_URL');
             $content = [
                 "name" => $user->fullname,
-                // "passowrd_link" => $baseRedirURL.'/authentication/reset-password/'.$token,
-                "body" => 'This email is to confirm a recent password reset request for your account. To confirm this request and reset your password Please click below link <br><br><center> <a href='.$baseRedirURL.'/authentication/reset-password/'.$token.' style="color: #000;font-size: 18px;text-decoration: underline, font-family: Roboto Condensed, sans-serif;"  target="_blank">Reset your password </a></center>',
+                // "passowrd_link" => $baseRedirURL.'/reset-password/'.$token,
+                "body" => 'This email is to confirm a recent password reset request for your account. To confirm this request and reset your password Please click below link <br><br><center> <a href='.$baseRedirURL.'/api/reset-password/'.$token.' style="color: #000;font-size: 18px;text-decoration: underline, font-family: Roboto Condensed, sans-serif;"  target="_blank">Reset your password </a></center>',
             ];
 
             if (env('IS_MAIL_ENABLE', false) == true) {
@@ -230,7 +232,7 @@ class AuthController extends Controller
     public function updatePassword(Request $request)
     {
         $validation = \Validator::make($request->all(),[ 
-            'password'  => 'required|string',
+            'password'  => 'required',
             'token'     => 'required'
         ]);
 
@@ -238,7 +240,8 @@ class AuthController extends Controller
             return response()->json(prepareResult(true, $validation->messages(), $validation->messages()->first()), config('httpcodes.bad_request'));
         }
 
-        try {
+        try 
+        {
             $tokenExist = DB::table('password_resets')
             ->where('token', $request->token)
             ->first();
@@ -247,26 +250,31 @@ class AuthController extends Controller
             }
 
             $user = User::where('email',$tokenExist->email)->first();
-
             if (!$user) {
                 return response()->json(prepareResult(true, [], trans('translate.user_not_exist')), config('httpcodes.not_found'));
-            }
+            } 
+
             if($user->role_id == 1)
             {
                 $validation = \Validator::make($request->all(),[ 
-                    'password'      => 'min:15|regex:/^(?=.*[0-9])(?=.*[!@#$%^&*])(?=.*[a-z])(?=.*[A-Z])[a-zA-Z0-9!@#$%^&*]{15,25}$/'
+                    'password'      => 'min:15'
                 ]);
             }
-            else{
+            else
+            {
                 $validation = \Validator::make($request->all(),[ 
-                    'password'      => 'min:8|regex:/^(?=.*[0-9])(?=.*[!@#$%^&*])(?=.*[a-z])(?=.*[A-Z])[a-zA-Z0-9!@#$%^&*]{15,25}$/'
+                    'password'      => 'min:8'
                 ]);
             }
             if ($validation->fails()) {
                 return response()->json(prepareResult(true, $validation->messages(), $validation->messages()->first()), config('httpcodes.bad_request'));
             }
 
-            
+            if(empty(validatePassword($request->password)))
+            {
+                $mess = 'Must contain any three of the following four qualities: Uppercase characters, Lowercase characters, Alpha-numeric characters, and special characters (e.g., #*&% etc.)';
+                return response()->json(prepareResult(true, [], $mess), config('httpcodes.bad_request'));
+            }           
 
             if(in_array($user->status, [0,2])) {
                 return response()->json(prepareResult(true, [], trans('translate.account_is_inactive')), config('httpcodes.unauthorized'));
@@ -277,13 +285,15 @@ class AuthController extends Controller
 
             DB::table('password_resets')->where(['email'=> $tokenExist->email])->delete();
 
-            ////////notification and mail//////////
-            /*$variable_data = [
-                '{{name}}' => $user->name
-            ];*/
-           // notification('password-changed', $user, $variable_data);
-            /////////////////////////////////////
+            $content = [
+                "name" => auth()->user()->name,
+                "body" => 'Your Password has been updated Successfully!',
+            ];
 
+            if (env('IS_MAIL_ENABLE', false) == true) {
+               
+                $recevier = Mail::to(auth()->user()->email)->send(new PasswordUpdateMail($content));
+            }
 
             return response()->json(prepareResult(false, $tokenExist->email, trans('translate.password_changed')),config('httpcodes.success'));
 
@@ -295,33 +305,35 @@ class AuthController extends Controller
 
     public function changePassword(Request $request)
     {
-        $validation = \Validator::make($request->all(),[ 
-            'old_password'  => 'required',
-            'password'      => 'required'
-        ]);
-
+        if(auth()->user()->role_id == 1)
+        {
+            $validation = \Validator::make($request->all(),[ 
+                'old_password'  => 'required',
+                'password'      => 'required|min:15'
+            ]);
+        }
+        else
+        {
+            $validation = \Validator::make($request->all(),[ 
+                'old_password'  => 'required',
+                'password'      => 'required|min:8'
+            ]);
+        }
         if ($validation->fails()) {
             return response()->json(prepareResult(true, $validation->messages(), $validation->messages()->first()), config('httpcodes.bad_request'));
         }
 
-        try {
+        if(empty(validatePassword($request->password)))
+        {
+            $mess = 'Must contain any three of the following four qualities: Uppercase characters, Lowercase characters, Alpha-numeric characters, and special characters (e.g., #*&% etc.)';
+            return response()->json(prepareResult(true, [], $mess), config('httpcodes.bad_request'));
+        }
 
-            // $user = User::where('email', Auth::user()->email)->first();
-
-            $user = Auth::user();            
+        try 
+        {
+            $user = Auth::user();  
             if(in_array($user->status, [0,2])) {
                 return response()->json(prepareResult(true, [], trans('translate.account_is_inactive')), config('httpcodes.unauthorized'));
-            }
-            if($user->role_id == 1)
-            {
-                $validation = \Validator::make($request->all(),[ 
-                    'password'      => 'min:15|regex:/^(?=.*[0-9])(?=.*[!@#$%^&*])(?=.*[a-z])(?=.*[A-Z])[a-zA-Z0-9!@#$%^&*]{15,25}$/'
-                ]);
-            }
-            else{
-                $validation = \Validator::make($request->all(),[ 
-                    'password'      => 'min:8|regex:/^(?=.*[0-9])(?=.*[!@#$%^&*])(?=.*[a-z])(?=.*[A-Z])[a-zA-Z0-9!@#$%^&*]{8,25}$/'
-                ]);
             }
             if ($validation->fails()) {
                 return response()->json(prepareResult(true, $validation->messages(), $validation->messages()->first()), config('httpcodes.bad_request'));
@@ -330,12 +342,15 @@ class AuthController extends Controller
                 $user = User::where('email', Auth::user()->email)
                 ->update(['password' => Hash::make($request->password),'password_last_updated' => date('Y-m-d')]);
 
-                ////////notification and mail//////////
-                /*$variable_data = [
-                    '{{name}}' => $user->name
-                ];*/
-                //notification('password-changed', $user, $variable_data);
-                /////////////////////////////////////
+                $content = [
+                    "name" => auth()->user()->name,
+                    "body" => 'Your Password has been updated Successfully!',
+                ];
+
+                if (env('IS_MAIL_ENABLE', false) == true) {
+                   
+                    $recevier = Mail::to(auth()->user()->email)->send(new PasswordUpdateMail($content));
+                }
             }
             else
             {
@@ -356,9 +371,9 @@ class AuthController extends Controller
             $usertoken =[
                 'token'=> $token,
             ];
-            return prepareResult(true,'Token',$usertoken,config('httpcodes.success'));
+            return prepareResult(false,$usertoken,'Token',config('httpcodes.success'));
         } else {
-            return prepareResult(false,'Token not found',[],config('httpcodes.bad_request'));
+            return prepareResult(true,'Token not found',[],config('httpcodes.bad_request'));
         }
 
     }

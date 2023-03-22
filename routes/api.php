@@ -26,7 +26,7 @@ Route::namespace('App\Http\Controllers\API\Common')->group(function () {
         Route::post('login', 'login')->middleware('throttle:5,15')->name('login');
         Route::post('verify-otp', 'verifyOtp')->name('verify-otp');
         Route::post('forgot-password', 'forgotPassword')->name('forgot-password');
-        Route::get('authentication/reset-password/{token}','resetPassword')->name('password.reset');
+        Route::get('reset-password/{token}','resetPassword')->name('password.reset');
         Route::post('update-password', 'updatePassword')->name('update-password');
     });
 

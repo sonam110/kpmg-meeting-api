@@ -52,9 +52,10 @@ function addUser($email)
     ]);
 
     $baseRedirURL = env('APP_URL');
+    // Login credentials are following - email:'.$user->email.' , password:'.$randomNo.'.
     $content = [
         "name" => $user->name,
-        "body" => 'You have been registered. Login credentials are following - email:'.$user->email.' , password:'.$randomNo.'. <br>To reset your password Please click on the link -> <a href='.$baseRedirURL.'/authentication/reset-password/'.$token.' style="color: #000;font-size: 18px;text-decoration: underline, font-family: Roboto Condensed, sans-serif;"  target="_blank">Reset your password </a>',
+        "body" => 'You have been registered.<br>To reset your password Please click on the link -> <a href='.$baseRedirURL.'/api/reset-password/'.$token.' style="color: #000;font-size: 18px;text-decoration: underline, font-family: Roboto Condensed, sans-serif;"  target="_blank">Reset your password </a>',
     ];
 
     if (env('IS_MAIL_ENABLE', false) == true) {
@@ -78,6 +79,29 @@ function addUser($email)
         $user->givePermissionTo($permission);
     }
     return $masterUser;
+}
+
+function validatePassword($val) {
+  $re = array();
+  if ($val) {
+  	// check password must contain at least one number
+      if (preg_match('/\d/', $val)) {
+        array_push($re, true);
+      }
+      // check password must contain at least one special character
+      if (preg_match('/[!@#$%^&*(),.?":{}|<>]/', $val)) {
+        array_push($re, true);
+      }
+      // check password must contain at least one uppercase letter
+      if (preg_match('/[A-Z]/', $val)) {
+        array_push($re, true);
+      }
+      // check password must contain at least one lowercase letter
+      if (preg_match('/[a-z]/', $val)) {
+        array_push($re, true);
+      }
+  }
+  return count($re);
 }
 
 

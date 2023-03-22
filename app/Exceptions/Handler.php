@@ -45,7 +45,8 @@ class Handler extends ExceptionHandler
     public function register()
     {
         $this->renderable(function (ThrottleRequestsException $e) {
-            return response()->json(prepareResult(true, [], trans('translate.too_many_attempts')), config('httpcodes.not_found'));
+            return response()->json(prepareResult(true, ["account_locked"=> true,
+"time"=>date('Y-m-d H:i:s')], trans('translate.too_many_attempts')), config('httpcodes.not_found'));
         });
         
         // $this->reportable(function (Throwable $e) {
