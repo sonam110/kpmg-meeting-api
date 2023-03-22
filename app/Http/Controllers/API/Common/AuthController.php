@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Hash;
 use App\Models\User;
 use App\Models\Otp;
 use App\Models\LoginLog;
+use App\Models\FailedLoginAttempt;
 use Illuminate\Support\Str;
 use Carbon\Carbon;
 use Auth;
@@ -34,6 +35,18 @@ class AuthController extends Controller
         try {
             $email = $request->email;
             $user = User::select('*')->where('email', $email)->first();
+            $loginCheck = DB::table('oauth_access_tokens')->where('user_id', $user->id)->first();
+            if(!empty($loginCheck))
+            {
+                if($request->logout_from_all_devices == 'yes')
+                {
+                    DB::table('oauth_access_tokens')->where('user_id', $user->id)->delete();
+                }
+                else
+                {
+                    return response()->json(prepareResult(true, [], trans('translate.user_already_logged_in')), config('httpcodes.not_found'));
+                }
+            }
             if (!$user)  {
                 return response()->json(prepareResult(true, [], trans('translate.user_not_exist')), config('httpcodes.not_found'));
             }
@@ -43,8 +56,12 @@ class AuthController extends Controller
             }
 
             if(Hash::check($request->password, $user->password)) {
-                $otpSend = rand(1000,9999);
-                $otp = new Otp;
+                $otpSend = rand(100000,999999);
+                $otp = Otp::where('email',$request->email)->first();
+                if(empty($otp))
+                {
+                    $otp = new Otp; 
+                }
                 $otp->email = $email;
                 $otp->otp =  base64_encode($otpSend);
                 $otp->save();
@@ -56,7 +73,7 @@ class AuthController extends Controller
                 ];
 
                 if (env('IS_MAIL_ENABLE', false) == true) {
-                   
+
                     $recevier = Mail::to($request->email)->send(new VerifyOtpMail($content));
                 }
 
@@ -71,6 +88,21 @@ class AuthController extends Controller
 
                 return response()->json(prepareResult(false, [], trans('translate.otp_sent')),config('httpcodes.success'));
             } else {
+
+                // $fla = FailedLoginAttempt::where('user_id',$user->id)->where('ip_address',$request->ip())->first();
+                // if(empty($fla))
+                // {
+                //     $fla = new FailedLoginAttempt;
+                //     $fla->attempt_count = 0;
+                // }
+                // else
+                // {
+                //     $fla->attempt_count = $fla->attempt_count + 1;
+                // }
+                // $fla->user_id = $user->id;
+                // $fla->ip_address = $request->ip();
+                // $fla->save();
+
                 return response()->json(prepareResult(true, [], trans('translate.invalid_username_and_password')),config('httpcodes.unauthorized'));
             }
         } catch (\Throwable $e) {
@@ -101,7 +133,7 @@ class AuthController extends Controller
                 if (!$otpCheck)  {
                     return response()->json(prepareResult(true, [], trans('translate.invalid_otp')), config('httpcodes.not_found'));
                 }
-                elseif((strtotime($otpCheck->created_at) + 600) < strtotime(date('Y-m-d H:i:s')))
+                elseif((strtotime($otpCheck->updated_at) + 600) < strtotime(date('Y-m-d H:i:s')))
                 {
                     return response()->json(prepareResult(true, [], trans('translate.otp_expired')), config('httpcodes.not_found'));
                 }
@@ -115,6 +147,8 @@ class AuthController extends Controller
 
             $log = new LoginLog;
             $log->user_id = $user->id;
+            $log->ip_address = $request->ip();
+            $log->location = json_encode(\Location::get($request->ip()));
             $log->save();
 
             return response()->json(prepareResult(false, $user, trans('translate.request_successfully_submitted')),config('httpcodes.success'));
@@ -143,6 +177,7 @@ class AuthController extends Controller
         }
         return response()->json(prepareResult(true, [], trans('translate.something_went_wrong')), config('httpcodes.internal_server_error'));
     }
+
     public function forgotPassword(Request $request)
     {
         $validation = \Validator::make($request->all(),[ 
@@ -171,7 +206,7 @@ class AuthController extends Controller
               'email' => $request->email, 
               'token' => $token, 
               'created_at' => Carbon::now()
-            ]);
+          ]);
 
             $baseRedirURL = env('APP_URL');
             $content = [
@@ -181,7 +216,7 @@ class AuthController extends Controller
             ];
 
             if (env('IS_MAIL_ENABLE', false) == true) {
-               
+
                 $recevier = Mail::to($request->email)->send(new ForgotPasswordMail($content));
             }
             return response()->json(prepareResult(false, $request->email, trans('translate.password_reset_link_send_to_your_mail')),config('httpcodes.success'));
@@ -195,7 +230,7 @@ class AuthController extends Controller
     public function updatePassword(Request $request)
     {
         $validation = \Validator::make($request->all(),[ 
-            'password'  => 'required|string|min:6',
+            'password'  => 'required|string',
             'token'     => 'required'
         ]);
 
@@ -205,8 +240,8 @@ class AuthController extends Controller
 
         try {
             $tokenExist = DB::table('password_resets')
-                ->where('token', $request->token)
-                ->first();
+            ->where('token', $request->token)
+            ->first();
             if (!$tokenExist) {
                 return response()->json(prepareResult(true, [], trans('translate.token_expired_or_not_found')), config('httpcodes.unauthorized'));
             }
@@ -216,14 +251,30 @@ class AuthController extends Controller
             if (!$user) {
                 return response()->json(prepareResult(true, [], trans('translate.user_not_exist')), config('httpcodes.not_found'));
             }
+            if($user->role_id == 1)
+            {
+                $validation = \Validator::make($request->all(),[ 
+                    'password'      => 'min:15|regex:/^(?=.*[0-9])(?=.*[!@#$%^&*])(?=.*[a-z])(?=.*[A-Z])[a-zA-Z0-9!@#$%^&*]{15,25}$/'
+                ]);
+            }
+            else{
+                $validation = \Validator::make($request->all(),[ 
+                    'password'      => 'min:8|regex:/^(?=.*[0-9])(?=.*[!@#$%^&*])(?=.*[a-z])(?=.*[A-Z])[a-zA-Z0-9!@#$%^&*]{15,25}$/'
+                ]);
+            }
+            if ($validation->fails()) {
+                return response()->json(prepareResult(true, $validation->messages(), $validation->messages()->first()), config('httpcodes.bad_request'));
+            }
+
+            
 
             if(in_array($user->status, [0,2])) {
                 return response()->json(prepareResult(true, [], trans('translate.account_is_inactive')), config('httpcodes.unauthorized'));
             }
 
             $user = User::where('email', $tokenExist->email)
-                    ->update(['password' => Hash::make($request->password),'password_last_updated' => date('Y-m-d')]);
- 
+            ->update(['password' => Hash::make($request->password),'password_last_updated' => date('Y-m-d')]);
+
             DB::table('password_resets')->where(['email'=> $tokenExist->email])->delete();
 
             ////////notification and mail//////////
@@ -245,8 +296,8 @@ class AuthController extends Controller
     public function changePassword(Request $request)
     {
         $validation = \Validator::make($request->all(),[ 
-            'old_password'  => 'required|string|min:6',
-            'password'      => 'required|string|min:6'
+            'old_password'  => 'required',
+            'password'      => 'required'
         ]);
 
         if ($validation->fails()) {
@@ -254,15 +305,30 @@ class AuthController extends Controller
         }
 
         try {
-            
-            $user = User::where('email', Auth::user()->email)->first();
-            
+
+            // $user = User::where('email', Auth::user()->email)->first();
+
+            $user = Auth::user();            
             if(in_array($user->status, [0,2])) {
                 return response()->json(prepareResult(true, [], trans('translate.account_is_inactive')), config('httpcodes.unauthorized'));
             }
+            if($user->role_id == 1)
+            {
+                $validation = \Validator::make($request->all(),[ 
+                    'password'      => 'min:15|regex:/^(?=.*[0-9])(?=.*[!@#$%^&*])(?=.*[a-z])(?=.*[A-Z])[a-zA-Z0-9!@#$%^&*]{15,25}$/'
+                ]);
+            }
+            else{
+                $validation = \Validator::make($request->all(),[ 
+                    'password'      => 'min:8|regex:/^(?=.*[0-9])(?=.*[!@#$%^&*])(?=.*[a-z])(?=.*[A-Z])[a-zA-Z0-9!@#$%^&*]{8,25}$/'
+                ]);
+            }
+            if ($validation->fails()) {
+                return response()->json(prepareResult(true, $validation->messages(), $validation->messages()->first()), config('httpcodes.bad_request'));
+            }
             if(Hash::check($request->old_password, $user->password)) {
                 $user = User::where('email', Auth::user()->email)
-                    ->update(['password' => Hash::make($request->password),'password_last_updated' => date('Y-m-d')]);
+                ->update(['password' => Hash::make($request->password),'password_last_updated' => date('Y-m-d')]);
 
                 ////////notification and mail//////////
                 /*$variable_data = [
@@ -300,6 +366,6 @@ class AuthController extends Controller
     public function unauthorized(Request $request)
     {
        return prepareResult(false,[],'Unauthorized. Please login.', config('httpcodes.unauthorized'));
-    }
+   }
 
 }

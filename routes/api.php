@@ -23,7 +23,7 @@ Route::namespace('App\Http\Controllers\API\Common')->group(function () {
 
     Route::controller(AuthController::class)->group(function () {
         Route::get('unauthorized', 'unauthorized')->name('unauthorized');
-        Route::post('login', 'login')->name('login');
+        Route::post('login', 'login')->middleware('throttle:5,15')->name('login');
         Route::post('verify-otp', 'verifyOtp')->name('verify-otp');
         Route::post('forgot-password', 'forgotPassword')->name('forgot-password');
         Route::get('authentication/reset-password/{token}','resetPassword')->name('password.reset');

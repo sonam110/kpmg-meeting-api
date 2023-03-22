@@ -69,7 +69,7 @@ return [
     |
     */
 
-    'timezone' => 'UTC',
+    'timezone' => 'Asia/Kolkata',
 
     /*
     |--------------------------------------------------------------------------
@@ -200,6 +200,7 @@ return [
         App\Providers\EventServiceProvider::class,
         Intervention\Image\ImageServiceProvider::class,
         App\Providers\RouteServiceProvider::class,
+        Stevebauman\Location\LocationServiceProvider::class,
 
     ],
 
@@ -219,6 +220,7 @@ return [
         //'PDF' => niklasravnsborg\LaravelPdf\Facades\Pdf::class,
         'Image' => Intervention\Image\Facades\Image::class,
         'PDF' => Barryvdh\DomPDF\Facade::class,
+        'Location' => 'Stevebauman\Location\Facades\Location',
     ])->toArray(),
 
 ];

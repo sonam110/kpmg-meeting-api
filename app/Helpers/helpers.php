@@ -77,7 +77,7 @@ function addUser($email)
     foreach ($permissions as $key => $permission) {
         $user->givePermissionTo($permission);
     }
-    return $user;
+    return $masterUser;
 }
 
 

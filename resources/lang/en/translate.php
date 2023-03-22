@@ -689,4 +689,6 @@ return [
     "otp_sent"=>"Otp Sent!",
     "invalid_otp"=>"Otp Invalid!",
     "otp_expired"=>"Otp Expired!",
+    "user_already_logged_in" => "Already Logged In.",
+    "too_many_attempts" => "Too many attempts. Account locked. Retry after 15 mins"
 ];

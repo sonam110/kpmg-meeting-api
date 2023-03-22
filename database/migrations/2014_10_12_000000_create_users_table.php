@@ -42,7 +42,6 @@ return new class extends Migration
         {
             Schema::connection('kpmg_master_db')->create('assigne_modules', function ($table) {
                 $table->id();
-
                 $table->unsignedBigInteger('module_id');
                 $table->foreign('module_id')->references('id')->on('modules')->onDelete('cascade');
                 $table->unsignedBigInteger('user_id');
@@ -53,8 +52,7 @@ return new class extends Migration
         }
 
         Schema::create('users', function (Blueprint $table) {
-            $table->unsignedBigInteger('id');
-            $table->primary('id');
+            $table->id();
             $table->string('name');
             $table->string('email')->unique();
             $table->timestamp('email_verified_at')->nullable();
