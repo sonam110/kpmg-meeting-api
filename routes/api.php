@@ -113,7 +113,7 @@ Route::namespace('App\Http\Controllers\API\Admin')->group(function () {
             Route::post('users','users')->name('users');
             Route::post('user-action','userAction')->name('user-action');
             Route::resource('user', UserController::class)->only([
-                'store','destroy','show', 'update'
+                'store','show', 'update'
             ]);
         });
 

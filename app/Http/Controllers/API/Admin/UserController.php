@@ -115,8 +115,6 @@ class UserController extends Controller
             'name'      => 'required',
             'email'     => 'required|email|unique:users,email',
             'password'  => 'required|string|min:6',
-            'mobile_number'    => 'required|min:8|max:15',
-            'designation'  => 'required|string',
         ]);
 
         if ($validation->fails()) {
@@ -239,8 +237,6 @@ class UserController extends Controller
         $validation = \Validator::make($request->all(), [
             'name'      => 'required',
             'email'     => 'email|required|unique:users,email,'.$id,
-            'mobile_number'    => 'required|min:8|max:15',
-            'designation'  => 'required|string',
         ]);
 
         if ($validation->fails()) {
@@ -248,7 +244,8 @@ class UserController extends Controller
         }
 
         DB::beginTransaction();
-        try {
+        try 
+        {
             $user = User::where('id',$id)->first();
         
             if(!$user)
@@ -310,29 +307,29 @@ class UserController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function destroy($id)
-    {
-        try {
-            $user = User::where('id',$id)->first();
-            if(!$user)
-            {
-                return response()->json(prepareResult(true, [], trans('translate.user_not_exist')), config('httpcodes.not_found'));
-            }
+    // public function destroy($id)
+    // {
+    //     try {
+    //         $user = User::where('id',$id)->first();
+    //         if(!$user)
+    //         {
+    //             return response()->json(prepareResult(true, [], trans('translate.user_not_exist')), config('httpcodes.not_found'));
+    //         }
 
-            if($user->role_id=='1')
-            {
-                return response(prepareResult(true, [], trans('translate.record_not_found')), config('httpcodes.not_found'));
-            }
+    //         if($user->role_id=='1')
+    //         {
+    //             return response(prepareResult(true, [], trans('translate.record_not_found')), config('httpcodes.not_found'));
+    //         }
 
-            $isDeleted = $user->delete();
-            $masterUser = MasterUser::where('id',$id)->delete();
-            $assigneModule = AssigneModule::where('user_id',$id)->delete();
-            return response()->json(prepareResult(false, [], trans('translate.deleted')), config('httpcodes.success'));
-        } catch (\Throwable $e) {
-            \Log::error($e);
-            return response()->json(prepareResult(true, $e->getMessage(), trans('translate.something_went_wrong')), config('httpcodes.internal_server_error'));
-        }
-    }
+    //         $isDeleted = $user->delete();
+    //         $masterUser = MasterUser::where('id',$id)->delete();
+    //         $assigneModule = AssigneModule::where('user_id',$id)->delete();
+    //         return response()->json(prepareResult(false, [], trans('translate.deleted')), config('httpcodes.success'));
+    //     } catch (\Throwable $e) {
+    //         \Log::error($e);
+    //         return response()->json(prepareResult(true, $e->getMessage(), trans('translate.something_went_wrong')), config('httpcodes.internal_server_error'));
+    //     }
+    // }
     public function userAction(Request $request)
     {
         try {
@@ -346,22 +343,22 @@ class UserController extends Controller
             if ($validation->fails()) {
                 return response(prepareResult(true, $validation->messages(), $validation->messages()->first()), config('httpcodes.bad_request'));
             }
-            if($request->action =='delete'){
+            // if($request->action =='delete'){
 
-                $userDelete = User::whereIn('id',$request->ids)->delete();
-                $masterUser = MasterUser::whereIn('id',$request->ids)->delete();
-                $assigneModule = AssigneModule::whereIn('user_id',$request->ids)->delete();
-                return response()->json(prepareResult(false, [], trans('translate.deleted')), config('httpcodes.success'));
-            }
+            //     $userDelete = User::whereIn('id',$request->ids)->delete();
+            //     $masterUser = MasterUser::whereIn('id',$request->ids)->delete();
+            //     $assigneModule = AssigneModule::whereIn('user_id',$request->ids)->delete();
+            //     return response()->json(prepareResult(false, [], trans('translate.deleted')), config('httpcodes.success'));
+            // }
             if($request->action =='active'){
 
                 $userDelete = User::whereIn('id',$request->ids)->update(['status'=>'1']);
-                return response()->json(prepareResult(false, [],'Action done successfully', config('httpcodes.success')));
+                return response()->json(prepareResult(false, [],trans('translate.active'), config('httpcodes.success')));
             }
             if($request->action =='inactive'){
 
                 $userDelete = User::whereIn('id',$request->ids)->update(['status'=>'0']);
-                return response()->json(prepareResult(false, [], 'Action done successfully', config('httpcodes.success')));
+                return response()->json(prepareResult(false, [], trans('translate.inactive'), config('httpcodes.success')));
             }
             
         } catch (\Throwable $e) {
