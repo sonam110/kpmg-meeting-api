@@ -6,6 +6,9 @@ use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
 use Illuminate\Http\Exceptions\ThrottleRequestsException;
 use Throwable;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use App\Models\User;
+use Mail;
+use App\Mail\TooManyAttemptMail;
 
 class Handler extends ExceptionHandler
 {
@@ -45,16 +48,27 @@ class Handler extends ExceptionHandler
      */
     public function register()
     {
-        $this->renderable(function (ThrottleRequestsException $e) {
-            return response()->json(prepareResult(true, ["account_locked"=> true,"time"=>date('Y-m-d H:i:s')], trans('translate.too_many_attempts')), config('httpcodes.not_found'));
+        $this->reportable(function (Throwable $e) {
+            //
         });
-        // $this->reportable(function (Throwable $e) {
-        //     //
-        // });
     }
 
     public function render($request, Throwable $exception)
     {
+        $this->renderable(function (ThrottleRequestsException $e, $request) {
+            $user = User::first();
+            $content = [
+                "name" => $user->name,
+                "body" => 'User with email address '.$request->email.' is trying brute force.',
+            ];
+
+            if (env('IS_MAIL_ENABLE', false) == true) {
+               
+                $recevier = Mail::to($user->email)->send(new TooManyAttemptMail($content));
+            }
+            return response()->json(prepareResult(true, ["account_locked"=> true,"time"=>date('Y-m-d H:i:s')], trans('translate.too_many_attempts')), config('httpcodes.not_found'));
+        });
+        
         $this->renderable(function (NotFoundHttpException $e, $request) {
             if ($request->is('api/*')) {
                 return response(['success' => false, 'message' =>'Record not found.', "code" => 404], 404);
