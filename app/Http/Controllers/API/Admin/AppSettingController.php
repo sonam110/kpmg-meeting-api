@@ -5,6 +5,7 @@ namespace App\Http\Controllers\API\Admin;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\AppSetting;
+use App\Models\CustomLog;
 use Validator;
 use Auth;
 use Exception;
@@ -39,11 +40,29 @@ class AppSettingController extends Controller
 
         DB::beginTransaction();
         try {
-            $appSetting = AppSetting::where('id','1')->first();
+            // $appSetting = AppSetting::where('id','1')->first();
+            $appSetting = AppSetting::first(); 
+            //create-log
+            $customLog = new CustomLog;
+            $customLog->created_by = auth()->id();
+            $customLog->type = 'app-setting';
+            $customLog->event = 'update';
+            $customLog->ip_address = $request->ip();
+            $customLog->location = json_encode(\Location::get($request->ip()));
+
             if(!$appSetting)
             {
+                $customLog->status = 'failed';
+                $customLog->failure_reason = 'No App setting found';
+                $customLog->save();
+                DB::commit();
                 return response()->json(prepareResult(true, [],'No App setting found', config('httpcodes.not_found')));
             }
+
+            $customLog->status = 'success';
+            $customLog->last_record_before_edition = json_encode($appSetting);
+            $customLog->save();
+
             $appSetting->app_name = $request->app_name;
             $appSetting->description = $request->description;
             $appSetting->app_logo  = $request->app_logo;
@@ -52,6 +71,8 @@ class AppSettingController extends Controller
             $appSetting->address = $request->address;
             $appSetting->log_expiry_days = $request->log_expiry_days;
             $appSetting->save();
+
+
             DB::commit();
             return response()->json(prepareResult(false, $appSetting, trans('translate.updated')),config('httpcodes.success'));
         } catch (\Throwable $e) {

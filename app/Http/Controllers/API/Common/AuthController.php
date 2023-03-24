@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Hash;
 use App\Models\User;
 use App\Models\Otp;
 use App\Models\LoginLog;
+use App\Models\CustomLog;
 use App\Models\FailedLoginAttempt;
 use Illuminate\Support\Str;
 use Carbon\Carbon;
@@ -33,12 +34,22 @@ class AuthController extends Controller
             return response()->json(prepareResult(true, $validation->messages(), $validation->messages()->first()), config('httpcodes.bad_request'));
         }
 
-        try {
+        try 
+        {
             $email = $request->email;
             $user = User::select('*')->where('email', $email)->first();
             if (!$user)  {
                 return response()->json(prepareResult(true, [], trans('translate.user_not_exist')), config('httpcodes.not_found'));
             }
+            ////create-log
+            $customLog = new CustomLog;
+            $customLog->created_by = $user->id;
+            $customLog->type = 'login';
+            $customLog->event = 'login';
+            $customLog->ip_address = $request->ip();
+            $customLog->location = json_encode(\Location::get($request->ip()));
+            $customLog->status = 'failed';
+
             $loginCheck = DB::table('oauth_access_tokens')->where('user_id', $user->id)->first();
             if(!empty($loginCheck))
             {
@@ -48,11 +59,15 @@ class AuthController extends Controller
                 }
                 else
                 {
+                    $customLog->failure_reason = trans('translate.user_already_logged_in');
+                    $customLog->save();
                     return response()->json(prepareResult(true, ['is_logged_in'=> true], trans('translate.user_already_logged_in')), config('httpcodes.not_found'));
                 }
             }
 
             if(in_array($user->status, [0,2])) {
+                $customLog->failure_reason = trans('translate.account_is_inactive');
+                $customLog->save();
                 return response()->json(prepareResult(true, [], trans('translate.account_is_inactive')), config('httpcodes.unauthorized'));
             }
 
@@ -78,23 +93,12 @@ class AuthController extends Controller
                     $recevier = Mail::to($request->email)->send(new VerifyOtpMail($content));
                 }
 
+                $customLog->status = 'success';
+                $customLog->save();
                 return response()->json(prepareResult(false, [], trans('translate.otp_sent')),config('httpcodes.success'));
             } else {
-
-                // $fla = FailedLoginAttempt::where('user_id',$user->id)->where('ip_address',$request->ip())->first();
-                // if(empty($fla))
-                // {
-                //     $fla = new FailedLoginAttempt;
-                //     $fla->attempt_count = 0;
-                // }
-                // else
-                // {
-                //     $fla->attempt_count = $fla->attempt_count + 1;
-                // }
-                // $fla->user_id = $user->id;
-                // $fla->ip_address = $request->ip();
-                // $fla->save();
-
+                $customLog->failure_reason = trans('translate.invalid_username_and_password');
+                $customLog->save();
                 return response()->json(prepareResult(true, [], trans('translate.invalid_username_and_password')),config('httpcodes.unauthorized'));
             }
         } catch (\Throwable $e) {
@@ -113,8 +117,19 @@ class AuthController extends Controller
             return response()->json(prepareResult(true, $validation->messages(), $validation->messages()->first()), config('httpcodes.bad_request'));
         }
 
-        try {
+        try 
+        {
             $email = $request->email;
+            $user = User::select('*')->where('email', $email)->first();
+
+            $customLog = new CustomLog;
+            $customLog->type = 'login';
+            $customLog->event = 'otp-verify';
+            $customLog->ip_address = $request->ip();
+            $customLog->location = json_encode(\Location::get($request->ip()));
+            $customLog->status = 'failed';
+            $customLog->created_by = $user->id;
+            
             if($request->otp == 1234)
             {
 
@@ -122,11 +137,16 @@ class AuthController extends Controller
             else
             {
                 $otpCheck = Otp::where('email',$email)->where('otp',base64_encode($request->otp))->first();
+
                 if (!$otpCheck)  {
+                    $customLog->failure_reason = trans('translate.invalid_otp');
+                    $customLog->save();
                     return response()->json(prepareResult(true, [], trans('translate.invalid_otp')), config('httpcodes.not_found'));
                 }
                 elseif((strtotime($otpCheck->updated_at) + 600) < strtotime(date('Y-m-d H:i:s')))
                 {
+                    $customLog->failure_reason = trans('translate.otp_expired');
+                    $customLog->save();
                     return response()->json(prepareResult(true, [], trans('translate.otp_expired')), config('httpcodes.not_found'));
                 }
             }
@@ -137,11 +157,16 @@ class AuthController extends Controller
             $user['roles']    = $role;
             $user['permissions']  = $role->permissions()->select('id','name as action','group_name as subject','se_name')->get();
 
+            ////create-log
+
             $log = new LoginLog;
             $log->user_id = $user->id;
             $log->ip_address = $request->ip();
             $log->location = json_encode(\Location::get($request->ip()));
             $log->save();
+
+            $customLog->status = 'success';
+            $customLog->save();
 
             return response()->json(prepareResult(false, $user, trans('translate.request_successfully_submitted')),config('httpcodes.success'));
         } catch (\Throwable $e) {
@@ -155,11 +180,23 @@ class AuthController extends Controller
         {
             try
             {
+                //create-log
+                $customLog = new CustomLog;
+	            $customLog->created_by = $user->id;
+	            $customLog->type = 'logout';
+	            $customLog->event = 'logout';
+	            $customLog->ip_address = $request->ip();
+	            $customLog->location = json_encode(\Location::get($request->ip()));
+	            $customLog->status = 'success';
+	            $customLog->save();
+
                 $token = Auth::user()->token();
                 $token->revoke();
                 auth('api')->user()->tokens->each(function ($token, $key) {
                     $token->delete();
                 });
+
+                
                 return response()->json(prepareResult(false, [], trans('translate.logout_message')), config('httpcodes.success'));
             }
             catch (\Throwable $e) {
@@ -186,8 +223,18 @@ class AuthController extends Controller
             if (!$user) {
                 return response()->json(prepareResult(true, [], trans('translate.user_not_exist')), config('httpcodes.not_found'));
             }
+            //create-log
+            $customLog = new CustomLog;
+            $customLog->created_by = $user->id;
+            $customLog->type = 'forgot-password';
+            $customLog->event = 'forgot-password';
+            $customLog->ip_address = $request->ip();
+            $customLog->location = json_encode(\Location::get($request->ip()));
 
             if(in_array($user->status, [0,2])) {
+                $customLog->status = 'failed';
+                $customLog->failure_reason = trans('translate.account_is_inactive');
+                $customLog->save();
                 return response()->json(prepareResult(true, [], trans('translate.account_is_inactive')), config('httpcodes.unauthorized'));
             }
 
@@ -200,6 +247,9 @@ class AuthController extends Controller
                   'token' => $token, 
                   'created_at' => Carbon::now()
               ]);
+
+            $customLog->status = 'sucess';
+            $customLog->save();
 
             $baseRedirURL = env('APP_URL');
             $content = [
@@ -257,25 +307,45 @@ class AuthController extends Controller
                     'password'      => 'min:8'
                 ]);
             }
+            //create-log
+            $customLog = new CustomLog;
+            $customLog->created_by = $user->id;
+            $customLog->type = 'update-password';
+            $customLog->event = 'update-password';
+            $customLog->ip_address = $request->ip();
+            $customLog->location = json_encode(\Location::get($request->ip()));
+            $customLog->status = 'failed';
             if ($validation->fails()) {
+                $customLog->failure_reason = $validation->messages()->first();
+                $customLog->save();
                 return response()->json(prepareResult(true, $validation->messages(), $validation->messages()->first()), config('httpcodes.bad_request'));
             }
 
             if(empty(validatePassword($request->password)))
             {
+                $customLog->failure_reason = trans('translate.password_format_invalid');
+                $customLog->save();
                 return response()->json(prepareResult(true, [], trans('translate.password_format_invalid')), config('httpcodes.bad_request'));
             }
+            
 
             if(Hash::check($request->password, $user->password)) {
-                return response()->json(prepareResult(true, ['password_denied'=>true], trans('translate.chhose_other_password')), config('httpcodes.bad_request'));
+                $customLog->failure_reason = trans('translate.choose_other_password');
+                $customLog->save();
+                return response()->json(prepareResult(true, ['password_denied'=>true], trans('translate.choose_other_password')), config('httpcodes.bad_request'));
             }           
 
             if(in_array($user->status, [0,2])) {
+                $customLog->failure_reason = trans('translate.account_is_inactive');
+                $customLog->save();
                 return response()->json(prepareResult(true, [], trans('translate.account_is_inactive')), config('httpcodes.unauthorized'));
             }
 
             User::where('email', $tokenExist->email)
             ->update(['password' => Hash::make($request->password),'password_last_updated' => date('Y-m-d')]);
+
+            $customLog->status = 'success';
+            $customLog->save();
 
             DB::table('password_resets')->where(['email'=> $tokenExist->email])->delete();
 
@@ -301,8 +371,9 @@ class AuthController extends Controller
     {
         try 
         {
+            $user = Auth::user();  
 
-            if(auth()->user()->role_id == 1)
+            if($user->role_id == 1)
             {
                 $validation = \Validator::make($request->all(),[ 
                     'old_password'  => 'required',
@@ -316,26 +387,40 @@ class AuthController extends Controller
                     'password'      => 'required|min:8'
                 ]);
             }
+            //create-log
+            $customLog = new CustomLog;
+            $customLog->created_by = $user->id;
+            $customLog->type = 'change-password';
+            $customLog->event = 'change-password';
+            $customLog->ip_address = $request->ip();
+            $customLog->location = json_encode(\Location::get($request->ip()));
+            $customLog->status = 'failed';
+
             if ($validation->fails()) {
+                $customLog->failure_reason = $validation->messages()->first();
+                $customLog->save();
                 return response()->json(prepareResult(true, $validation->messages(), $validation->messages()->first()), config('httpcodes.bad_request'));
             }
 
             if(empty(validatePassword($request->password)))
             {
+                $customLog->failure_reason = trans('translate.password_format_invalid');
+                $customLog->save();
                 return response()->json(prepareResult(true, [], trans('translate.password_format_invalid')), config('httpcodes.bad_request'));
             }
 
             if(Hash::check($request->password, auth()->user()->password)) {
-                return response()->json(prepareResult(true, ['password_denied'=>true], trans('translate.chhose_other_password')), config('httpcodes.bad_request'));
+                $customLog->failure_reason = trans('translate.choose_other_password');
+                $customLog->save();
+                return response()->json(prepareResult(true, ['password_denied'=>true], trans('translate.choose_other_password')), config('httpcodes.bad_request'));
             }
 
-            $user = Auth::user();  
             if(in_array($user->status, [0,2])) {
+                $customLog->failure_reason = trans('translate.account_is_inactive');
+                $customLog->save();
                 return response()->json(prepareResult(true, [], trans('translate.account_is_inactive')), config('httpcodes.unauthorized'));
             }
-            if ($validation->fails()) {
-                return response()->json(prepareResult(true, $validation->messages(), $validation->messages()->first()), config('httpcodes.bad_request'));
-            }
+
             if(Hash::check($request->old_password, $user->password)) {
                 $user = User::where('email', Auth::user()->email)
                 ->update(['password' => Hash::make($request->password),'password_last_updated' => date('Y-m-d')]);
@@ -349,9 +434,13 @@ class AuthController extends Controller
                    
                     $recevier = Mail::to(auth()->user()->email)->send(new PasswordUpdateMail($content));
                 }
+                $customLog->status = 'success';
+                $customLog->save();
             }
             else
             {
+                $customLog->failure_reason = trans('translate.old_password_not_matched');
+                $customLog->save();
                 return response()->json(prepareResult(true, [], trans('translate.old_password_not_matched')),config('httpcodes.unauthorized'));
             }
             
