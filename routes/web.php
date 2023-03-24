@@ -1,7 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-
+use App\Mail\VerifyOtpMail;
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -21,6 +21,17 @@ Route::get('/optimize-command', function () {
     \Artisan::call('optimize:clear');
     \Artisan::call('cache:forget spatie.permission.cache');
     return redirect('/');
+});
+
+Route::get('/test-mail', function () {
+    $otpSend = rand(100000,999999);
+    $content = [
+        "name" => 'Testing Name',
+        "body" => 'your verification otp is : '.$otpSend,
+    ];
+    $recevier = Mail::to('ashok@nrt.co.in')->send(new VerifyOtpMail($content));
+    print_r($recevier);
+
 });
 
 Route::get('/meeting-sync', function () {
