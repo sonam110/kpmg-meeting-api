@@ -26,7 +26,7 @@ class AppSettingController extends Controller
             return response()->json(prepareResult(true, $e->getMessage(), trans('translate.something_went_wrong')), config('httpcodes.internal_server_error'));
         }
     }
-     public function updateSetting(Request $request)
+    public function updateSetting(Request $request)
     {
         $validation = \Validator::make($request->all(), [
             'app_name'      => 'required',

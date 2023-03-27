@@ -182,7 +182,7 @@ class AuthController extends Controller
             {
                 //create-log
                 $customLog = new CustomLog;
-	            $customLog->created_by = $user->id;
+	            $customLog->created_by = auth()->id();
 	            $customLog->type = 'logout';
 	            $customLog->event = 'logout';
 	            $customLog->ip_address = $request->ip();

@@ -84,6 +84,8 @@ class PermissionSeeder extends Seeder
         
       Permission::create(['name' => 'action-items-delete', 'guard_name' => 'api','group_name'=>'action-items','se_name'=>'categories-delete','belongs_to'=>'3']);
 
+      Permission::create(['name' => 'logs-browse', 'guard_name' => 'api','group_name'=>'logs','se_name'=>'logs-browse','belongs_to'=>'1']);
+
        
 
     }
