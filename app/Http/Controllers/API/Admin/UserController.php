@@ -170,11 +170,11 @@ class UserController extends Controller
               'created_at' => \Carbon\Carbon::now()
             ]);
 
-            $baseRedirURL = env('APP_URL');
+            $baseRedirURL = env('FRONT_URL');
             // Login credentials are following - email:'.$user->email.' , password:'.$randomNo.'.
             $content = [
                 "name" => $user->name,
-                "body" => 'You have been registered.<br>To reset your password Please click on the link -> <a href='.$baseRedirURL.'/api/reset-password/'.$token.' style="color: #000;font-size: 18px;text-decoration: underline, font-family: Roboto Condensed, sans-serif;"  target="_blank">Reset your password </a>',
+                "body" => 'You have been registered.<br>To reset your password Please click on the link -> <a href='.$baseRedirURL.'/reset-password/'.$token.' style="color: #000;font-size: 18px;text-decoration: underline, font-family: Roboto Condensed, sans-serif;"  target="_blank">Reset your password </a>',
             ];
 
             if (env('IS_MAIL_ENABLE', false) == true) {

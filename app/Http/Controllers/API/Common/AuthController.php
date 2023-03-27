@@ -81,8 +81,7 @@ class AuthController extends Controller
                 $otp->email = $email;
                 $otp->otp =  base64_encode($otpSend);
                 $otp->save();
-
-                $baseRedirURL = env('APP_URL');
+                
                 $content = [
                     "name" => $user->name,
                     "body" => 'your verification otp is : '.$otpSend,
@@ -251,11 +250,11 @@ class AuthController extends Controller
             $customLog->status = 'sucess';
             $customLog->save();
 
-            $baseRedirURL = env('APP_URL');
+            $baseRedirURL = env('FRONT_URL');
             $content = [
                 "name" => $user->fullname,
                 // "passowrd_link" => $baseRedirURL.'/reset-password/'.$token,
-                "body" => 'This email is to confirm a recent password reset request for your account. To confirm this request and reset your password Please click below link <br><br><center> <a href='.$baseRedirURL.'/api/reset-password/'.$token.' style="color: #000;font-size: 18px;text-decoration: underline, font-family: Roboto Condensed, sans-serif;"  target="_blank">Reset your password </a></center>',
+                "body" => 'This email is to confirm a recent password reset request for your account. To confirm this request and reset your password Please click below link <br><br><center> <a href='.$baseRedirURL.'/reset-password/'.$token.' style="color: #000;font-size: 18px;text-decoration: underline, font-family: Roboto Condensed, sans-serif;"  target="_blank">Reset your password </a></center>',
             ];
 
             if (env('IS_MAIL_ENABLE', false) == true) {
