@@ -55,19 +55,19 @@ class Handler extends ExceptionHandler
 
     public function render($request, Throwable $exception)
     {
-        $this->renderable(function (ThrottleRequestsException $e, $request) {
-            $user = User::first();
-            $content = [
-                "name" => $user->name,
-                "body" => 'User with email address '.$request->email.' is trying brute force.',
-            ];
+        // $this->renderable(function (ThrottleRequestsException $e, $request) {
+        //     $user = User::first();
+        //     $content = [
+        //         "name" => $user->name,
+        //         "body" => 'User with email address '.$request->email.' is trying brute force.',
+        //     ];
 
-            if (env('IS_MAIL_ENABLE', false) == true) {
+        //     if (env('IS_MAIL_ENABLE', false) == true) {
                
-                $recevier = Mail::to($user->email)->send(new TooManyAttemptMail($content));
-            }
-            return response()->json(prepareResult(true, ["account_locked"=> true,"time"=>date('Y-m-d H:i:s')], trans('translate.too_many_attempts')), config('httpcodes.not_found'));
-        });
+        //         $recevier = Mail::to($user->email)->send(new TooManyAttemptMail($content));
+        //     }
+        //     return response()->json(prepareResult(true, ["account_locked"=> true,"time"=>date('Y-m-d H:i:s')], trans('translate.too_many_attempts')), config('httpcodes.not_found'));
+        // });
         
         $this->renderable(function (NotFoundHttpException $e, $request) {
             if ($request->is('api/*')) {

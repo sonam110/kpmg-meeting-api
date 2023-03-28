@@ -21,10 +21,30 @@ use App\Mail\ForgotPasswordMail;
 use App\Mail\PasswordUpdateMail;
 use App\Mail\VerifyOtpMail;
 use Spatie\Permission\Models\Role;
+use Illuminate\Support\Facades\RateLimiter;
+use App\Mail\TooManyAttemptMail;
+
 class AuthController extends Controller
 {
     public function login(Request $request)
     {
+        if (RateLimiter::tooManyAttempts(request()->ip(), 5)) {
+
+            //mail integrate here
+            $user = User::first();
+            $content = [
+                "name" => $user->name,
+                "body" => 'User with email address '.$request->email.' is trying brute force.',
+            ];
+
+            if (env('IS_MAIL_ENABLE', false) == true) {
+               
+                $recevier = Mail::to($user->email)->send(new TooManyAttemptMail($content));
+            }
+
+            return response()->json(prepareResult(true, ["account_locked"=> true,"time"=>date('Y-m-d H:i:s')], 'Too many fail login attempt your ip has restricted for 15 minutes.'), config('httpcodes.unauthorized'));
+        }
+
         $validation = \Validator::make($request->all(),[ 
             'email'     => 'required',
             'password'  => 'required',
@@ -61,6 +81,7 @@ class AuthController extends Controller
                 {
                     $customLog->failure_reason = trans('translate.user_already_logged_in');
                     $customLog->save();
+                    RateLimiter::hit(request()->ip(), 900);
                     return response()->json(prepareResult(true, ['is_logged_in'=> true], trans('translate.user_already_logged_in')), config('httpcodes.not_found'));
                 }
             }
@@ -68,6 +89,7 @@ class AuthController extends Controller
             if(in_array($user->status, [0,2])) {
                 $customLog->failure_reason = trans('translate.account_is_inactive');
                 $customLog->save();
+                RateLimiter::hit(request()->ip(), 900);
                 return response()->json(prepareResult(true, [], trans('translate.account_is_inactive')), config('httpcodes.unauthorized'));
             }
 
@@ -98,6 +120,7 @@ class AuthController extends Controller
             } else {
                 $customLog->failure_reason = trans('translate.invalid_username_and_password');
                 $customLog->save();
+                RateLimiter::hit(request()->ip(), 900);
                 return response()->json(prepareResult(true, [], trans('translate.invalid_username_and_password')),config('httpcodes.unauthorized'));
             }
         } catch (\Throwable $e) {
