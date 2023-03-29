@@ -152,25 +152,18 @@ class AuthController extends Controller
             $customLog->status = 'failed';
             $customLog->created_by = $user->id;
             
-            if($request->otp == 1234)
-            {
+            $otpCheck = Otp::where('email',$email)->where('otp',base64_encode($request->otp))->first();
 
+            if (!$otpCheck)  {
+                $customLog->failure_reason = trans('translate.invalid_otp');
+                $customLog->save();
+                return response()->json(prepareResult(true, [], trans('translate.invalid_otp')), config('httpcodes.not_found'));
             }
-            else
+            elseif((strtotime($otpCheck->updated_at) + 600) < strtotime(date('Y-m-d H:i:s')))
             {
-                $otpCheck = Otp::where('email',$email)->where('otp',base64_encode($request->otp))->first();
-
-                if (!$otpCheck)  {
-                    $customLog->failure_reason = trans('translate.invalid_otp');
-                    $customLog->save();
-                    return response()->json(prepareResult(true, [], trans('translate.invalid_otp')), config('httpcodes.not_found'));
-                }
-                elseif((strtotime($otpCheck->updated_at) + 600) < strtotime(date('Y-m-d H:i:s')))
-                {
-                    $customLog->failure_reason = trans('translate.otp_expired');
-                    $customLog->save();
-                    return response()->json(prepareResult(true, [], trans('translate.otp_expired')), config('httpcodes.not_found'));
-                }
+                $customLog->failure_reason = trans('translate.otp_expired');
+                $customLog->save();
+                return response()->json(prepareResult(true, [], trans('translate.otp_expired')), config('httpcodes.not_found'));
             }
             $user = User::select('*')->where('email', $email)->first();
             $accessToken = $user->createToken('authToken')->accessToken;
@@ -372,13 +365,13 @@ class AuthController extends Controller
             DB::table('password_resets')->where(['email'=> $tokenExist->email])->delete();
 
             $content = [
-                "name" => auth()->user()->name,
+                "name" => $user->name,
                 "body" => 'Your Password has been updated Successfully!',
             ];
 
             if (env('IS_MAIL_ENABLE', false) == true) {
                
-                $recevier = Mail::to(auth()->user()->email)->send(new PasswordUpdateMail($content));
+                $recevier = Mail::to($user->email)->send(new PasswordUpdateMail($content));
             }
 
             return response()->json(prepareResult(false, $tokenExist->email, trans('translate.password_changed')),config('httpcodes.success'));
