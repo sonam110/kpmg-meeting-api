@@ -94,12 +94,20 @@ class AuthController extends Controller
             }
 
             if(Hash::check($request->password, $user->password)) {
-                $otpSend = rand(100000,999999);
-                $otp = Otp::where('email',$request->email)->first();
-                if(empty($otp))
+
+                //old record delete
+                Otp::where('email', $email)->delete();
+
+                if(env('IS_MAIL_ENABLE', false) == true)
                 {
-                    $otp = new Otp; 
+                    $otpSend = rand(100000,999999);
                 }
+                else
+                {
+                    $otpSend = 963852;
+                }
+                
+                $otp = new Otp; 
                 $otp->email = $email;
                 $otp->otp =  base64_encode($otpSend);
                 $otp->save();
@@ -182,6 +190,9 @@ class AuthController extends Controller
 
             $customLog->status = 'success';
             $customLog->save();
+
+            //OTP record deleted
+            $otpCheck->delete();
 
             return response()->json(prepareResult(false, $user, trans('translate.request_successfully_submitted')),config('httpcodes.success'));
         } catch (\Throwable $e) {

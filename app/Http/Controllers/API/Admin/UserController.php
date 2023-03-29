@@ -32,8 +32,13 @@ class UserController extends Controller
     public function users(Request $request)
     {
         try {
-            $query = User::where('role_id','!=','1')->with('role:id,name,se_name');
+            $query = User::with('role:id,name,se_name');
             
+            if(auth()->user()->role_id!=1)
+            {
+                $query->where('role_id','!=','1');
+            }
+
             if(!empty($request->email))
             {
                 $query->where('email', 'LIKE', '%'.$request->email.'%');
