@@ -437,17 +437,17 @@ class AuthController extends Controller
             }
 
             if(Hash::check($request->old_password, $user->password)) {
-                $user = User::where('email', Auth::user()->email)
+                $user = User::where('email', auth()->user()->email)
                 ->update(['password' => Hash::make($request->password),'password_last_updated' => date('Y-m-d')]);
 
                 $content = [
-                    "name" => $user->name,
+                    "name" => auth()->user()->name,
                     "body" => 'Your Password has been updated Successfully!',
                 ];
 
                 if (env('IS_MAIL_ENABLE', false) == true) {
                    
-                    $recevier = Mail::to($user->email)->send(new PasswordUpdateMail($content));
+                    $recevier = Mail::to(auth()->user()->email)->send(new PasswordUpdateMail($content));
                 }
                 $customLog->status = 'success';
                 $customLog->save();
