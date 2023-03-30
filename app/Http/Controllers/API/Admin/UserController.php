@@ -305,13 +305,6 @@ class UserController extends Controller
             if ($validation->fails()) {
                 return response(prepareResult(true, $validation->messages(), $validation->messages()->first()), config('httpcodes.bad_request'));
             }
-            // if($request->action =='delete'){
-
-            //     $userDelete = User::whereIn('id',$request->ids)->delete();
-            //     $masterUser = MasterUser::whereIn('id',$request->ids)->delete();
-            //     $assigneModule = AssigneModule::whereIn('user_id',$request->ids)->delete();
-            //     return response()->json(prepareResult(false, [], trans('translate.deleted')), config('httpcodes.success'));
-            // }
             if($request->action =='active'){
 
                 $userDelete = User::whereIn('id',$request->ids)->update(['status'=>'1']);
