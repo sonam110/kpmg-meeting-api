@@ -15,9 +15,7 @@ class RoleController extends Controller
    
     public function __construct()
     {
-
-
-        $this->middleware('permission:role-browse',['except' => ['show']]);
+        $this->middleware('permission:role-browse',['except' => ['roles','store','update','destroy']]);
         $this->middleware('permission:role-add', ['only' => ['store']]);
         $this->middleware('permission:role-edit', ['only' => ['update']]);
         $this->middleware('permission:role-read', ['only' => ['show']]);
