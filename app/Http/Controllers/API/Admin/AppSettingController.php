@@ -12,7 +12,7 @@ use Exception;
 use DB;
 class AppSettingController extends Controller
 {
-     public function appSetting(Request $request)
+    public function appSetting(Request $request)
     {
         try {
             $appSetting = AppSetting::select('*')->where('id','1')->first();
@@ -26,6 +26,7 @@ class AppSettingController extends Controller
             return response()->json(prepareResult(true, $e->getMessage(), trans('translate.something_went_wrong')), config('httpcodes.internal_server_error'));
         }
     }
+
     public function updateSetting(Request $request)
     {
         $validation = \Validator::make($request->all(), [
@@ -81,4 +82,5 @@ class AppSettingController extends Controller
             return response()->json(prepareResult(true, $e->getMessage(), trans('translate.something_went_wrong')), config('httpcodes.internal_server_error'));
         }
     }
+    
 }

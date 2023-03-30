@@ -122,6 +122,10 @@ Route::namespace('App\Http\Controllers\API\Admin')->group(function () {
             Route::post('update-setting','updateSetting')->name('update-setting');
         });
 
+        Route::controller(LogController::class)->group(function () {
+            Route::post('logs','logs')->name('logs');
+        });
+
     });
 });    
 
