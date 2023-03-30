@@ -27,7 +27,13 @@ use App\Mail\TooManyAttemptMail;
 class AuthController extends Controller
 {
 
-    // Login Attempt
+    /**
+     * Login Attempt on the specified resource in storage.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param Request  $request
+     * @return \Illuminate\Http\Response
+     */
     public function login(Request $request)
     {
         if (RateLimiter::tooManyAttempts(request()->ip(), 5)) {
@@ -139,7 +145,13 @@ class AuthController extends Controller
         }
     }
 
-    // Otp verification
+    /**
+     * Otp verification on the specified resource in storage.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param Request  $request
+     * @return \Illuminate\Http\Response
+     */
     public function verifyOtp(Request $request)
     {
         $validation = \Validator::make($request->all(),[ 
@@ -204,7 +216,14 @@ class AuthController extends Controller
         }
     }
 
-    // Log Out
+
+    /**
+     * Log Out on the specified resource in storage.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param Request  $request
+     * @return \Illuminate\Http\Response
+     */
     public function logout(Request $request)
     {
         if (Auth::check()) 
@@ -238,7 +257,13 @@ class AuthController extends Controller
         return response()->json(prepareResult(true, [], trans('translate.something_went_wrong')), config('httpcodes.internal_server_error'));
     }
 
-    //Send Fassword Reset Link
+    /**
+    *Send Fassword Reset Link on the specified resource in storage.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param Request  $request
+     * @return \Illuminate\Http\Response
+     */
     public function forgotPassword(Request $request)
     {
         $validation = \Validator::make($request->all(),[ 
@@ -303,7 +328,13 @@ class AuthController extends Controller
     }
 
 
-    // Reset Password
+    /**
+     * Reset Password on the specified resource in storage.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param Request  $request
+     * @return \Illuminate\Http\Response
+     */
     public function updatePassword(Request $request)
     {
         $validation = \Validator::make($request->all(),[ 
@@ -401,7 +432,13 @@ class AuthController extends Controller
         }
     }
 
-    // Login User  Change Password 
+    /**
+     * Change Password  on the specified User in storage.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param Request  $request
+     * @return \Illuminate\Http\Response
+     */
     public function changePassword(Request $request)
     {
         try 
@@ -487,7 +524,13 @@ class AuthController extends Controller
         }
     }
 
-    //Reset Password Token-verification
+    /**
+     *Reset Password Token-verification on the specified resource in storage.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param Request  $request
+     * @return \Illuminate\Http\Response
+     */
     public function resetPassword($token)
     {
         if($token){

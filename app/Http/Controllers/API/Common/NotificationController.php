@@ -64,11 +64,6 @@ class NotificationController extends Controller
         }
     }
 
-    public function store(Request $request)
-    {        
-       
-    }
-
     /**
      * Display the specified resource.
      *
@@ -98,7 +93,13 @@ class NotificationController extends Controller
         }
     }
 
-    //Read Single Notification
+    /**
+     *Read Single Notification on the specified resource in storage.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param int  $id
+     * @return \Illuminate\Http\Response
+     */
     public function read($id)
     {
         try
@@ -125,7 +126,13 @@ class NotificationController extends Controller
         }
     }
 
-    //delete Perticular User All Notifications
+    /**
+     *delete Perticular User All Notifications  on the specified resource in storage.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param int  $id
+     * @return \Illuminate\Http\Response
+     */
     public function userNotificationDelete()
     {
         try
@@ -138,12 +145,17 @@ class NotificationController extends Controller
         }
     }
 
-    //get Unread  Notifications Count
+    /**
+     *get Unread  Notifications Count on the specified resource in storage.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param Request  $request
+     * @return \Illuminate\Http\Response
+     */
     public function unreadNotificationsCount()
     {
         try
         {
-            
             $count = Notification::where('user_id',Auth::id())->where('read_status',0)->count();
             return response(prepareResult(false, $query, trans('translate.fetched_count')), config('httpcodes.success'));
         } catch (\Throwable $e) {

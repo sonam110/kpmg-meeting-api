@@ -103,18 +103,6 @@ class ActionItemController extends Controller
         }
     }
 
-
-
-    /**
-     * Show the form for creating a new resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function create()
-    {
-        //
-    }
-
     /**
      * Store a newly created resource in storage.
      *
@@ -212,17 +200,6 @@ class ActionItemController extends Controller
     }
 
     /**
-     * Show the form for editing the specified resource.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function edit($id)
-    {
-        //
-    }
-
-    /**
      * Update the specified resource in storage.
      *
      * @param  \Illuminate\Http\Request  $request
@@ -288,19 +265,15 @@ class ActionItemController extends Controller
         }
     }
 
+    
+
     /**
-     * Remove the specified resource from storage.
+     * Action performed on the specified resource in storage.
      *
-     * @param  int  $id
+     * @param  \Illuminate\Http\Request  $request
+     * @param Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function destroy($id)
-    {
-        //
-    }
-
-
-    //Action-Performed
     public function action(Request $request)
     {
         $validation = \Validator::make($request->all(), [
