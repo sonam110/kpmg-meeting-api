@@ -19,10 +19,6 @@ class ActionItemController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
-    {
-        //
-    }
     public function actionItems(Request $request)
     {
         try {
@@ -171,6 +167,7 @@ class ActionItemController extends Controller
 
             }
 
+            //---Notify User For Task Assigned----//
             $notification = new Notification;
             $notification->user_id              = $request->owner_id;
             $notification->sender_id            = auth()->id();
@@ -302,6 +299,8 @@ class ActionItemController extends Controller
         //
     }
 
+
+    //Action-Performed
     public function action(Request $request)
     {
         $validation = \Validator::make($request->all(), [

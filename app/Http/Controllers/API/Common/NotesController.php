@@ -19,10 +19,6 @@ class NotesController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
-    {
-        //
-    }
     public function notes(Request $request)
     {
         try {
@@ -128,6 +124,7 @@ class NotesController extends Controller
 
             }
 
+            //Notify Organiser About Meeting Note
             $notification = new Notification;
             $notification->user_id              = $meetingNote->meeting->organised_by ? $meetingNote->meeting->organised_by : User::first()->id;
             $notification->sender_id            = auth()->id();
@@ -259,7 +256,7 @@ class NotesController extends Controller
                     $doc->save();
                 }
             }
-
+            //Notify Organizer about Meeting note
             $notification = new Notification;
             $notification->user_id              = $meetingNote->meeting->organised_by ? $meetingNote->meeting->organised_by : User::first()->id;
             $notification->sender_id            = auth()->id();
@@ -317,6 +314,7 @@ class NotesController extends Controller
         }
     }
 
+    //Action Performed
     public function action(Request $request)
     {
         $validation = \Validator::make($request->all(), [

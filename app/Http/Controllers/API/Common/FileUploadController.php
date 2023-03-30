@@ -9,7 +9,12 @@ use Image;
 class FileUploadController extends Controller
 {
    
-
+    /**
+     * Store a newly created resource in storage.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
+     */
     public function store(Request $request)
     {
         if($request->is_multiple==1)

@@ -20,6 +20,7 @@ use Mail;
 use App\Models\ActionItemController;
 class DashboardController extends Controller
 {
+    //DashBoard--Report-Data
     public function dashboard()
     {
         try {
@@ -41,10 +42,5 @@ class DashboardController extends Controller
         } catch(Exception $exception) {
                 return prepareResult(false, $exception->getMessage(),$exception->getMessage(), config('httpcodes.internal_server_error'));   
         }  
-    }
-
-    public function test(Request $request)
-    {
-        
     }
 }

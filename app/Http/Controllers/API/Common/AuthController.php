@@ -26,6 +26,8 @@ use App\Mail\TooManyAttemptMail;
 
 class AuthController extends Controller
 {
+
+    // Login Attempt
     public function login(Request $request)
     {
         if (RateLimiter::tooManyAttempts(request()->ip(), 5)) {
@@ -137,6 +139,7 @@ class AuthController extends Controller
         }
     }
 
+    // Otp verification
     public function verifyOtp(Request $request)
     {
         $validation = \Validator::make($request->all(),[ 
@@ -151,7 +154,7 @@ class AuthController extends Controller
         {
             $email = $request->email;
             $user = User::select('*')->where('email', $email)->first();
-
+            //create-log
             $customLog = new CustomLog;
             $customLog->type = 'login';
             $customLog->event = 'otp-verify';
@@ -200,6 +203,8 @@ class AuthController extends Controller
             return response()->json(prepareResult(true, $e->getMessage(), trans('translate.something_went_wrong')), config('httpcodes.internal_server_error'));
         }
     }
+
+    // Log Out
     public function logout(Request $request)
     {
         if (Auth::check()) 
@@ -233,6 +238,7 @@ class AuthController extends Controller
         return response()->json(prepareResult(true, [], trans('translate.something_went_wrong')), config('httpcodes.internal_server_error'));
     }
 
+    //Send Fassword Reset Link
     public function forgotPassword(Request $request)
     {
         $validation = \Validator::make($request->all(),[ 
@@ -296,6 +302,8 @@ class AuthController extends Controller
         }
     }
 
+
+    // Reset Password
     public function updatePassword(Request $request)
     {
         $validation = \Validator::make($request->all(),[ 
@@ -393,6 +401,7 @@ class AuthController extends Controller
         }
     }
 
+    // Login User  Change Password 
     public function changePassword(Request $request)
     {
         try 
@@ -478,6 +487,7 @@ class AuthController extends Controller
         }
     }
 
+    //Reset Password Token-verification
     public function resetPassword($token)
     {
         if($token){
@@ -490,7 +500,8 @@ class AuthController extends Controller
         }
 
     }
-    
+
+    // Not Authorized----nedd to login   
     public function unauthorized(Request $request)
     {
        return prepareResult(false,[],'Unauthorized. Please login.', config('httpcodes.unauthorized'));

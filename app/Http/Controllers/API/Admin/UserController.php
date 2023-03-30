@@ -25,10 +25,7 @@ class UserController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
-    {
-        //
-    }
+    
     public function users(Request $request)
     {
         try {
@@ -98,15 +95,6 @@ class UserController extends Controller
         }
     }
 
-    /**
-     * Show the form for creating a new resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function create()
-    {
-        //
-    }
 
     /**
      * Store a newly created resource in storage.
@@ -306,35 +294,7 @@ class UserController extends Controller
         }
     }
 
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    // public function destroy($id)
-    // {
-    //     try {
-    //         $user = User::where('id',$id)->first();
-    //         if(!$user)
-    //         {
-    //             return response()->json(prepareResult(true, [], trans('translate.user_not_exist')), config('httpcodes.not_found'));
-    //         }
-
-    //         if($user->role_id=='1')
-    //         {
-    //             return response(prepareResult(true, [], trans('translate.record_not_found')), config('httpcodes.not_found'));
-    //         }
-
-    //         $isDeleted = $user->delete();
-    //         $masterUser = MasterUser::where('id',$id)->delete();
-    //         $assigneModule = AssigneModule::where('user_id',$id)->delete();
-    //         return response()->json(prepareResult(false, [], trans('translate.deleted')), config('httpcodes.success'));
-    //     } catch (\Throwable $e) {
-    //         \Log::error($e);
-    //         return response()->json(prepareResult(true, $e->getMessage(), trans('translate.something_went_wrong')), config('httpcodes.internal_server_error'));
-    //     }
-    // }
+    //Action-Performed
     public function userAction(Request $request)
     {
         try {

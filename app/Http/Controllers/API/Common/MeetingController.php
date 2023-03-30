@@ -32,14 +32,9 @@ class MeetingController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
-    {
-        //
-    }
     public function meetings(Request $request)
     {
         try {
-            // return auth()->id();
             $column = 'id';
             $dir = 'Desc';
             if(!empty($request->sort))
@@ -160,7 +155,6 @@ class MeetingController extends Controller
     {
         $validation = \Validator::make($request->all(), [
             'meeting_title'      => 'required',
-            // 'meeting_ref_no'   => 'required|unique:meetings',
             'meeting_date'   => 'required',
             'meeting_time_start'   => 'required',
             'meeting_time_end'   => 'required',
@@ -219,6 +213,8 @@ class MeetingController extends Controller
                         ];
                         $recevier = Mail::to($attendee['email'])->send(new MeetingMail($content));
                     }
+
+                    // Notify User for their scheduled meeting //
 
                     $notification = new Notification;
                     $notification->user_id              = $user_id;
@@ -324,13 +320,11 @@ class MeetingController extends Controller
                 return response()->json(prepareResult(true, [],'No meeting found', config('httpcodes.not_found')));
             }
             $meeting->meeting_title = $request->meeting_title;
-            // $meeting->meeting_ref_no = $request->meeting_ref_no;
             $meeting->agenda_of_meeting  = $request->agenda_of_meeting;
             $meeting->meeting_date = $request->meeting_date;
             $meeting->meeting_time_start = $request->meeting_time_start;
             $meeting->meeting_time_end = $request->meeting_time_end;
             $meeting->meeting_link = $request->meeting_link;
-            // $meeting->organised_by = auth()->id();
             $meeting->is_repeat = ($request->is_repeat== true) ? 1:0;
             $meeting->status = $request->status ? $request->status : 1;
             $meeting->save();
@@ -406,6 +400,7 @@ class MeetingController extends Controller
         }
     }
 
+    //Action Performed
     public function action(Request $request)
     {
         $validation = \Validator::make($request->all(), [

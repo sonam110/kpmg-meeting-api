@@ -15,6 +15,11 @@ use Edujugon\PushNotification\PushNotification;
 
 class NotificationController extends Controller
 {
+    /**
+     * Display a listing of the resource.
+     *
+     * @return \Illuminate\Http\Response
+     */
     public function index(Request $request)
     {
         try
@@ -64,11 +69,23 @@ class NotificationController extends Controller
        
     }
 
+    /**
+     * Display the specified resource.
+     *
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
+     */
     public function show(Notification $notification)
     {
         return response(prepareResult(false, $userinfo, trans('translate.fetched_detail')), config('httpcodes.success'));
     }
 
+    /**
+     * Remove the specified resource from storage.
+     *
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
+     */
     public function destroy(Notification $notification)
     {
         try
@@ -81,6 +98,7 @@ class NotificationController extends Controller
         }
     }
 
+    //Read Single Notification
     public function read($id)
     {
         try
@@ -94,6 +112,7 @@ class NotificationController extends Controller
         }
     }
 
+    //Read All Notifications
     public function userNotificationReadAll()
     {
         try
@@ -106,6 +125,7 @@ class NotificationController extends Controller
         }
     }
 
+    //delete Perticular User All Notifications
     public function userNotificationDelete()
     {
         try
@@ -118,6 +138,7 @@ class NotificationController extends Controller
         }
     }
 
+    //get Unread  Notifications Count
     public function unreadNotificationsCount()
     {
         try
@@ -129,30 +150,5 @@ class NotificationController extends Controller
             \Log::error($e);
             return response()->json(prepareResult(true, $e->getMessage(), trans('translate.something_went_wrong')), config('httpcodes.internal_server_error'));
         }
-    }
-
-    public function notificationCheck(Request $request)
-    {
-        $push = new PushNotification('fcm');
-        $push->setMessage([
-            "notification"=>[
-                'title' => 'Testing Title',
-                'body'  => 'Testing Body',
-                'sound' => 'default',
-                'android_channel_id' => '1',
-                //'timestamp' => date('Y-m-d G:i:s')
-            ],
-            'data'=>[
-                'id'  => 1,
-                'user_type'  => 'Company',
-                'module'  => 'Activity',
-                'screen'  => 'home'
-            ]                        
-        ])
-        ->setApiKey(env('FIREBASE_KEY'))
-        ->setDevicesToken($request->device_token)
-        ->send();
-
-        return prepareResult(true,$push->getFeedback(), [],config('httpcodes.success'));
     }
 }

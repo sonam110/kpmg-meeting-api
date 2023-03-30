@@ -35,11 +35,13 @@ Route::namespace('App\Http\Controllers\API\Common')->group(function () {
     });
 
     Route::group(['middleware' => 'auth:api'],function () {
+        /*---------------------Auth-routess------------------------*/
         Route::controller(AuthController::class)->group(function () {
             Route::post('logout', 'logout')->name('logout');
             Route::post('change-password', 'changePassword')->name('changePassword');
         });
 
+        /*---------------------dashboard----------------------*/
         Route::controller(DashboardController::class)->group(function () {
             Route::post('dashboard','dashboard')->name('dashboard');
             Route::post('test-function','test')->name('test-function');
@@ -51,7 +53,7 @@ Route::namespace('App\Http\Controllers\API\Common')->group(function () {
             Route::apiResource('role', RoleController::class)->only(['store','destroy','show', 'update']);
         });
 
-
+        /*---------------File Upload--------------------*/
         Route::controller(FileUploadController::class)->group(function () {
             Route::post('file-uploads', 'fileUploads')->name('file-uploads');
             Route::post('file-upload', 'store')->name('file-upload');
@@ -117,11 +119,13 @@ Route::namespace('App\Http\Controllers\API\Admin')->group(function () {
             ]);
         });
 
+        /*---------------------App-Setting------------------------*/
         Route::controller(AppSettingController::class)->group(function () {
             Route::get('app-setting','appSetting')->name('app-setting');
             Route::post('update-setting','updateSetting')->name('update-setting');
         });
 
+        /*---------------------Logs------------------------*/
         Route::controller(LogController::class)->group(function () {
             Route::post('logs','logs')->name('logs');
         });

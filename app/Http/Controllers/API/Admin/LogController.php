@@ -11,6 +11,12 @@ use Exception;
 use DB;
 class LogController extends Controller
 {
+    /**
+     * Display a listing of the resource.
+     *
+     * @return \Illuminate\Http\Response
+     */
+    
     public function logs(Request $request)
     {
         try {
