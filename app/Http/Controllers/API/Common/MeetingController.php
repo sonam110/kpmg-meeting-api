@@ -27,6 +27,14 @@ use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 class MeetingController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('permission:meeting-browse',['only' => ['meetings']]);
+        $this->middleware('permission:meeting-add', ['only' => ['store']]);
+        $this->middleware('permission:meeting-edit', ['only' => ['update','action']]);
+        $this->middleware('permission:meeting-read', ['only' => ['show']]);
+        $this->middleware('permission:meeting-delete', ['only' => ['destroy']]);
+    }
     /**
      * Display a listing of the resource.
      *

@@ -15,6 +15,12 @@ use Edujugon\PushNotification\PushNotification;
 
 class NotificationController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('permission:notifications-browse',['only' => ['index']]);
+        $this->middleware('permission:notifications-read', ['only' => ['read','userNotificationReadAll']]);
+        $this->middleware('permission:notifications-delete', ['only' => ['destroy','index']]);
+    }
     /**
      * Display a listing of the resource.
      *

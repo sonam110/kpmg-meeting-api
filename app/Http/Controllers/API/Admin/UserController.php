@@ -20,6 +20,14 @@ use Spatie\Permission\Models\Role;
 use Spatie\Permission\Models\Permission;
 class UserController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('permission:user-browse',['only' => ['users']]);
+        $this->middleware('permission:user-add', ['only' => ['store']]);
+        $this->middleware('permission:user-edit', ['only' => ['update','userAction']]);
+        $this->middleware('permission:user-read', ['only' => ['show']]);
+        $this->middleware('permission:user-delete', ['only' => ['destroy']]);
+    }
     /**
      * Display a listing of the resource.
      *
@@ -29,7 +37,7 @@ class UserController extends Controller
     public function users(Request $request)
     {
         try {
-            $query = User::with('role:id,name,se_name');
+            $query = User::with('role:id,name,se_name')->where('status', 1);
             
             if(auth()->user()->role_id!=1)
             {

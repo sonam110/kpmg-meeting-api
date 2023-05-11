@@ -692,5 +692,6 @@ return [
     "user_already_logged_in" => "Already Logged In.",
     "too_many_attempts" => "Too many attempts. Account locked. Retry after 15 mins",
     "choose_other_password"=>"password should be other than existing password.",
-    "password_format_invalid"=>"Must contain any three of the following four qualities: Uppercase characters, Lowercase characters, Alpha-numeric characters, and special characters (e.g., #*&% etc.)"
+    "password_format_invalid"=>"Must contain any three of the following four qualities: Uppercase characters, Lowercase characters, Alpha-numeric characters, and special characters (e.g., #*&% etc.)",
+    "mail_sent"=>"Mail Sent"
 ];

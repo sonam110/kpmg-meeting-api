@@ -12,8 +12,19 @@ use Validator;
 use Auth;
 use Exception;
 use DB;
+use App\Mail\ManualMail;
+use App\Models\ManualMailLog;
+use Mail;
 class ActionItemController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('permission:action-items-browse',['only' => ['actionItems']]);
+        $this->middleware('permission:action-items-add', ['only' => ['store']]);
+        $this->middleware('permission:action-items-edit', ['only' => ['update','action']]);
+        $this->middleware('permission:action-items-read', ['only' => ['show']]);
+        $this->middleware('permission:action-items-delete', ['only' => ['destroy']]);
+    }
     /**
      * Display a listing of the resource.
      *
@@ -162,7 +173,7 @@ class ActionItemController extends Controller
             $notification->type                 = 'action';
             $notification->status_code          = 'success';
             $notification->title                = 'A new task has been assigned to you';
-            $notification->message              = 'Hello '.$actionItem->owner->name.', a new task has been assigned to you. Please check Action Menu to view the details';
+            $notification->message              = 'Hello '.@$actionItem->owner->name.', a new task has been assigned to you. Please check Action Menu to view the details';
             $notification->data_id              = $actionItem->id;
             $notification->read_status          = false;
             $notification->save();
@@ -288,34 +299,42 @@ class ActionItemController extends Controller
         try 
         {
             $ids = $request->ids;
+            if($request->percent == 100)
+            {
+                $action = 'completed';
+            }
+            else
+            {
+                $action = $request->action;
+            }
 
             
-            if($request->action == 'in_progress')
+            if($action == 'in_progress')
             {
                 ActionItem::whereIn('id',$ids)->update(['status'=>"in_progress"]);
                 $message = trans('translate.in_process');
             }
-            elseif($request->action == 'completed')
+            elseif($action == 'completed')
             {
                 ActionItem::whereIn('id',$ids)->update(['status'=>"completed","complete_date"=>date("Y-m-d"),"complete_percentage"=>"100"]);
                 $message = trans('translate.completed');
             }
-            elseif($request->action == 'on_hold')
+            elseif($action == 'on_hold')
             {
                 ActionItem::whereIn('id',$ids)->update(['status'=>"on_hold"]);
                 $message = trans('translate.on_hold');
             }
-            elseif($request->action == 'cancelled')
+            elseif($action == 'cancelled')
             {
                 ActionItem::whereIn('id',$ids)->update(['status'=>"cancelled"]);
                 $message = trans('translate.cancelled');
             }
-            elseif($request->action == 'pending')
+            elseif($action == 'pending')
             {
                 ActionItem::whereIn('id',$ids)->update(['status'=>"pending"]);
                 $message = trans('translate.pending');
             }
-            elseif($request->action == 'percentage')
+            elseif($action == 'percentage')
             {
                 if($request->percent == 100)
                 {
@@ -339,7 +358,7 @@ class ActionItemController extends Controller
                 $notification->sender_id            = auth()->id();
                 $notification->type                 = 'action';
                 $notification->status_code          = 'success';
-                if($request->action == 'percentage')
+                if($action == 'percentage')
                 {
                     $notification->title                = 'Action Percentage  Updated';
                     $notification->message              = 'Your action has been marked as '.$request->percent.'% completed. Please check Action Menu to find more details';
@@ -347,7 +366,7 @@ class ActionItemController extends Controller
                 else
                 {
                     $notification->title                = 'Action Status Updated';
-                    $notification->message              = 'Your action has been marked as '.$request->action.'. Please check Action Menu to find more details';
+                    $notification->message              = 'Your action has been marked as '.$action.'. Please check Action Menu to find more details';
                 }
                 $notification->data_id              = $value->id;
                 $notification->read_status          = false;
@@ -359,7 +378,7 @@ class ActionItemController extends Controller
                 $notification->sender_id            = auth()->id();
                 $notification->type                 = 'action';
                 $notification->status_code          = 'success';
-                if($request->action == 'percentage')
+                if($action == 'percentage')
                 {
                     $notification->title                = 'Action Percentage  Updated';
                     $notification->message              = 'Your action has been marked as '.$request->percent.'% completed. Please check Action Menu to find more details';
@@ -367,7 +386,7 @@ class ActionItemController extends Controller
                 else
                 {
                     $notification->title                = 'Action Status Updated';
-                    $notification->message              = 'Your action has been marked as '.$request->action.'. Please check Action Menu to find more details';
+                    $notification->message              = 'Your action has been marked as '.$action.'. Please check Action Menu to find more details';
                 }
                 $notification->data_id              = $value->id;
                 $notification->read_status          = false;
@@ -377,6 +396,107 @@ class ActionItemController extends Controller
             return response()->json(prepareResult(false, $actionItems, $message), config('httpcodes.success'));
         }
         catch (\Throwable $e) {
+            \Log::error($e);
+            return response()->json(prepareResult(true, $e->getMessage(), trans('translate.something_went_wrong')), config('httpcodes.internal_server_error'));
+        }
+    }
+
+    public function sendMail(Request $request)
+    {
+        $validation = \Validator::make($request->all(), [
+            'id'      => 'required',
+            'subject'      => 'required',
+            'body'      => 'required',
+        ]);
+
+        if ($validation->fails()) {
+            return response(prepareResult(true, $validation->messages(), $validation->messages()->first()), config('httpcodes.bad_request'));
+        }
+        DB::beginTransaction();
+        try 
+        {
+            $subject = $request->subject;
+            $body = $request->body;
+            $actionItem = ActionItem::find($request->id);
+            if(!$actionItem)
+            {
+                return response()->json(prepareResult(true, [],'No Action item found', config('httpcodes.not_found')));
+            }
+            $meeting = $actionItem->meeting;
+            $attendees = $meeting->attendees;
+            foreach ($attendees as $key => $attendee) {
+                if(!empty($attendee->user))
+                {
+                    // if (env('IS_MAIL_ENABLE', false) == true) {
+                        $content = [
+                            "name" =>$attendee->user->name,
+                            "subject" => $subject,
+                            "body" => $body,
+                        ];
+                        $recevier = Mail::to($attendee->user->email)->send(new ManualMail($content));
+                        if($recevier == true)
+                        {
+                            $manualMailLog = new ManualMailLog;
+                            $manualMailLog->action_item_id = $request->id;
+                            $manualMailLog->user_id = $attendee->user_id;
+                            $manualMailLog->subject = $subject;
+                            $manualMailLog->body = $body;
+                            $manualMailLog->save();
+                        }
+                    // }
+                }
+            }
+            DB::commit();
+            return response()->json(prepareResult(false, $actionItem, trans('translate.mail_sent')), config('httpcodes.success'));
+        }
+        catch (\Throwable $e) {
+            \Log::error($e);
+            return response()->json(prepareResult(true, $e->getMessage(), trans('translate.something_went_wrong')), config('httpcodes.internal_server_error'));
+        }
+    }
+
+    public function mailLogs(Request $request)
+    {
+        try {
+            $user = getUser();
+
+            $query = ManualMailLog::orderby('id','DESC');
+            if(!empty($request->action_item_id))
+            {
+                $query->where('action_item_id', $request->action_item_id);
+            }
+            if(!empty($request->subject))
+            {
+                $query->where('subject', 'LIKE', '%'.$request->subject.'%');
+            }
+            if(!empty($request->body))
+            {
+                $query->where('body', 'LIKE', '%'.$request->body.'%');
+            }
+            
+            if(!empty($request->per_page_record))
+            {
+                $perPage = $request->per_page_record;
+                $page = $request->input('page', 1);
+                $total = $query->count();
+                $result = $query->offset(($page - 1) * $perPage)->limit($perPage)->get();
+
+                $pagination =  [
+                    'data' => $result,
+                    'total' => $total,
+                    'current_page' => $page,
+                    'per_page' => $perPage,
+                    'last_page' => ceil($total / $perPage)
+                ];
+                $query = $pagination;
+            }
+            else
+            {
+                $query = $query->get();
+            }
+
+            return response(prepareResult(false, $query, trans('translate.fetched_records')), config('httpcodes.success'));
+        } catch (\Throwable $e) {
             \Log::error($e);
             return response()->json(prepareResult(true, $e->getMessage(), trans('translate.something_went_wrong')), config('httpcodes.internal_server_error'));
         }

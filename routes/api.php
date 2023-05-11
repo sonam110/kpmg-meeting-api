@@ -84,6 +84,8 @@ Route::namespace('App\Http\Controllers\API\Common')->group(function () {
                 'store','destroy','show', 'update'
             ]);
             Route::post('action-item-action', 'action')->name('action-item-action');
+            Route::post('action-item-send-mail', 'sendMail')->name('action-item-send-mail');
+            Route::post('action-item-mail-logs', 'mailLogs')->name('action-item-mail-logs');
         });
 
         /*-------------Permission------------------------*/

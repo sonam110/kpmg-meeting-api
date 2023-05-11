@@ -21,10 +21,10 @@ class Meeting extends Model
     }
     public function notes()
     {
-         return $this->hasMany(MeetingNote::class, 'meeting_id', 'id');
+         return $this->hasMany(MeetingNote::class, 'meeting_id', 'id')->where('status', 1);
     }
     public function organiser()
     {
-         return $this->belongsTo(User::class, 'organised_by', 'id');
+         return $this->belongsTo(User::class, 'organised_by', 'id')->where('status', 1);
     }
 }

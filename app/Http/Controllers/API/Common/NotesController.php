@@ -14,6 +14,14 @@ use Exception;
 use DB;
 class NotesController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('permission:notes-browse',['only' => ['notes']]);
+        $this->middleware('permission:notes-add', ['only' => ['store']]);
+        $this->middleware('permission:notes-edit', ['only' => ['update','action']]);
+        $this->middleware('permission:notes-read', ['only' => ['show']]);
+        $this->middleware('permission:notes-delete', ['only' => ['destroy']]);
+    }
     /**
      * Display a listing of the resource.
      *
@@ -22,7 +30,7 @@ class NotesController extends Controller
     public function notes(Request $request)
     {
         try {
-            $query = MeetingNote::orderby('id','DESC')->with('meeting','documents','createdBy:id,name,email','editedBy:id,name,email','actionItems.owner:id,name,email');
+            $query = MeetingNote::orderby('id','DESC')->with('meeting','documents','createdBy:id,name,email','editedBy:id,name,email','actionItems.owner:id,name,email')->where('status', 1);
             
             if(!empty($request->meeting_id))
             {
