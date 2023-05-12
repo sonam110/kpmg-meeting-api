@@ -33,7 +33,7 @@ Route::namespace('App\Http\Controllers\API\Common')->group(function () {
     Route::controller(MailSyncController::class)->group(function () {
         Route::get('meeting-sync', 'meetingSync')->name('meeting-sync');
     });
-
+    Route::get('file-access/{folderName}/{fileName}', 'FileUploadController@getFile'); 
     Route::group(['middleware' => 'auth:api'],function () {
         /*---------------------Auth-routess------------------------*/
         Route::controller(AuthController::class)->group(function () {

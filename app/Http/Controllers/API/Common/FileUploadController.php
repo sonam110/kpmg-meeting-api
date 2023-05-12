@@ -6,6 +6,9 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use DB;
 use Image;
+use File;
+use Storage;
+use Response;
 class FileUploadController extends Controller
 {
    
@@ -15,6 +18,7 @@ class FileUploadController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
+    //upload new file
     public function store(Request $request)
     {
         if($request->is_multiple==1)
@@ -34,88 +38,77 @@ class FileUploadController extends Controller
         }
         try
         {
-            $file = $request->file;
             $destinationPath = 'uploads/';
             $fileArray = array();
             $formatCheck = ['doc','docx','png','jpeg','jpg','pdf','svg','mp4','tif','tiff','bmp','gif','eps','raw','jfif','webp','pem','csv'];
 
             if($request->is_multiple==1)
             {
-                foreach ($file as $key => $value) 
+
+                $files = $request->file;
+                foreach ($files as $key => $file) 
                 {
-                    $extension = strtolower($value->getClientOriginalExtension());
+                    $extension = strtolower($file->getClientOriginalExtension());
                     if(!in_array($extension, $formatCheck))
                     {
                         return response()->json(prepareResult(true, [], trans('translate.file_not_allowed').'Only allowed : doc,docx,png,jpeg,jpg,pdf,svg,mp4,tif,tiff,bmp,gif,eps,raw,jfif,webp,pem,csv'), config('httpcodes.internal_server_error'));
                     }
-
-                    $fileName   = time().'-'.rand(0,99999).'.' . $value->getClientOriginalExtension();
-                    $extension = $value->getClientOriginalExtension();
-                    $fileSize = $value->getSize();
-
-                    if($extension == 'jpg' || $extension == 'jpeg' || $extension == 'png')
-                    {
-                        //Thumb image generate
-                        $imgthumb = Image::make($value->getRealPath());
-                        // $imgthumb->resize(100, null, function ($constraint) {
-                        //     $constraint->aspectRatio();
-                        // });
-                        $imgthumb->save($destinationPath.$fileName);
-                    }
-                    else
-                    {
-                        $value->move($destinationPath, $fileName);
-                    }
-
-                    
+                    $fileName   = time() . '.' . $file->getClientOriginalExtension();
+                    $filePath = 'uploads/' . $fileName;
+                    $file->storeAs('public/uploads',$fileName);
                     
                     $fileArray[] = [
-                        'file_name'         => env('CDN_DOC_URL').$destinationPath.$fileName,
-                        'file_extension'    => $value->getClientOriginalExtension(),
-                        'uploading_file_name' => $value->getClientOriginalName(),
+                        'file_name'         => url('api/file-access/'.$filePath),
+                        'file_extension'    => $file->getClientOriginalExtension(),
+                        'uploading_file_name' => $file->getClientOriginalName(),
                     ];
                 }
 
-                return response()->json(prepareResult(false, $fileArray, trans('translate.created')),config('httpcodes.created'));
+                return response(prepareResult(false, $fileArray, trans('translate.created')),config('httpcodes.created'));
             }
             else
             {
-                $fileName   = time().'-'.rand(0,99999).'.' . $file->getClientOriginalExtension();
-                $extension = strtolower($file->getClientOriginalExtension());
-                $fileSize = $file->getSize();
+                $file      = $request->file('file');
+                $extension = $file->getClientOriginalExtension();
+                $fileName   = time() . '.' . $extension;
+                $filePath = 'uploads/' . $fileName;
+                $file->storeAs('public/uploads',$fileName);
                 if(!in_array($extension, $formatCheck))
                 {
                     return response()->json(prepareResult(true, [], trans('translate.file_not_allowed').'Only allowed : doc,docx,png,jpeg,jpg,pdf,svg,mp4,tif,tiff,bmp,gif,eps,raw,jfif,webp,pem,csv'), config('httpcodes.internal_server_error'));
                 }
 
-                if($extension == 'jpg' || $extension == 'jpeg' || $extension == 'png')
-                {
-                    //Thumb image generate
-                    $imgthumb = Image::make($file->getRealPath());
-                    // $imgthumb->resize(100, null, function ($constraint) {
-                    //     $constraint->aspectRatio();
-                    // });
-                    $imgthumb->save($destinationPath.$fileName);
-                }
-                else
-                {
-                    $file->move($destinationPath, $fileName);
-                }
-
-                
                 $fileInfo = [
-                    'file_name'         => env('CDN_DOC_URL').$destinationPath.$fileName,
-                    'file_extension'    => $file->getClientOriginalExtension(),
+                    'file_name'         => url('api/file-access/'.$filePath),
+                    'file_extension'    => $extension,
                     'uploading_file_name' => $file->getClientOriginalName(),
                 ];
-                return response()->json(prepareResult(false, $fileInfo, trans('translate.created')),config('httpcodes.created'));
+                return response(prepareResult(false, $fileInfo, trans('translate.created')),config('httpcodes.created'));
             }   
         }
         catch (\Throwable $e) {
             \Log::error($e);
-            return response()->json(prepareResult(true, $e->getMessage(), trans('translate.something_went_wrong')), config('httpcodes.internal_server_error'));
+            return response(prepareResult(true, $e->getMessage(), trans('translate.something_went_wrong')), config('httpcodes.internal_server_error'));
         }
     }
 
-    
+
+    public function getFile($folderName,$fileName)
+    {
+        $path = storage_path('app/public/'.$folderName.'/'. $fileName);
+
+        // return $path;
+
+        if (!File::exists($path)) {
+            abort(404);
+        }
+
+        $file = File::get($path);
+        $type = File::mimeType($path);
+
+        $response = Response::make($file, 200);
+        $response->header("Content-Type", $type);
+
+        return $response;
+    }
 }

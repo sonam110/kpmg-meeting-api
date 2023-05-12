@@ -30,7 +30,7 @@ class NotesController extends Controller
     public function notes(Request $request)
     {
         try {
-            $query = MeetingNote::orderby('id','DESC')->with('meeting','documents','createdBy:id,name,email','editedBy:id,name,email','actionItems.owner:id,name,email')->where('status', 1);
+            $query = MeetingNote::orderby('id','DESC')->with('meeting','documents','createdBy:id,name,email','editedBy:id,name,email','actionItems.owner:id,name,email');
             
             if(!empty($request->meeting_id))
             {

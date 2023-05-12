@@ -37,7 +37,7 @@ class UserController extends Controller
     public function users(Request $request)
     {
         try {
-            $query = User::with('role:id,name,se_name')->where('status', 1);
+            $query = User::with('role:id,name,se_name');
             
             if(auth()->user()->role_id!=1)
             {
