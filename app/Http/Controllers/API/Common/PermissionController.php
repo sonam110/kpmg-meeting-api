@@ -84,9 +84,9 @@ class PermissionController extends Controller
     public function store(Request $request)
     {
         $validation = \Validator::make($request->all(),[
-            'name'      => 'required|unique:permissions,name',
-            'se_name'   => 'required|unique:permissions,se_name',
-            'group_name'=> 'required'
+            'name'      => 'required|unique:permissions,name|regex:/^[a-zA-Z0-9-_ ]+$/',
+            'se_name'   => 'required|unique:permissions,se_name|regex:/^[a-zA-Z0-9-_ ]+$/',
+            'group_name'=> 'required|regex:/^[a-zA-Z0-9-_ ]+$/'
         ]);
         if ($validation->fails()) {
             return response(prepareResult(true, $validation->messages(), $validation->messages()->first()), config('httpcodes.bad_request'));
@@ -153,9 +153,9 @@ class PermissionController extends Controller
     public function update(Request $request, Permission $permission)
     {
         $validation = \Validator::make($request->all(),[
-            'name'      => 'required|unique:permissions,name,'.$permission->id,
-            'se_name'   => 'required|unique:permissions,se_name,'.$permission->id,
-            'group_name'=> 'required'
+            'name'      => 'required|regex:/^[a-zA-Z0-9-_ ]+$/|unique:permissions,name,'.$permission->id,
+            'se_name'   => 'required|regex:/^[a-zA-Z0-9-_ ]+$/|unique:permissions,se_name,'.$permission->id,
+            'group_name'=> 'required|regex:/^[a-zA-Z0-9-_ ]+$/'
         ]);
 
         if ($validation->fails()) {

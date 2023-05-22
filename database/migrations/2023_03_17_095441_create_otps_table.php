@@ -17,6 +17,8 @@ return new class extends Migration
             $table->id();
             $table->string('email');
             $table->string('otp');
+            $table->integer('resent_count');
+            $table->timestamp('lock_till');
             $table->timestamps();
         });
     }

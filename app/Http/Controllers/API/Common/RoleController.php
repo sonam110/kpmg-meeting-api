@@ -79,7 +79,7 @@ class RoleController extends Controller
     public function store(Request $request)
     {
         $validator = \Validator::make($request->all(), [
-            'se_name'   => 'required',
+            'se_name'   => 'required|regex:/^[a-zA-Z0-9-_ ]+$/',
             'permissions' => 'required'
         ]);
         if ($validator->fails()) {
@@ -140,7 +140,7 @@ class RoleController extends Controller
     public function update(Request $request, Role $role)
     {
         $validator = \Validator::make($request->all(), [
-            'se_name'   => 'required',
+            'se_name'   => 'required|regex:/^[a-zA-Z0-9-_ ]+$/',
             'permissions' => 'required'
         ]);
         if ($validator->fails()) {

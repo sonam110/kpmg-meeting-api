@@ -36,13 +36,28 @@ class AuthController extends Controller
      */
     public function login(Request $request)
     {
+        $email = base64_decode($request->email);
+        $password = base64_decode($request->password);
+
+        $checkOtpReq = Otp::where('email', $email)->whereNotNull('lock_till')->first();
+        if($checkOtpReq && strtotime($checkOtpReq->lock_till) > time()) 
+        {
+            return response(prepareResult(true, ["account_locked"=> true, "time" => $checkOtpReq->lock_till], trans('translate.too_many_otp_requests')), config('httpcodes.unauthorized'));
+        }
+        if($checkOtpReq && strtotime($checkOtpReq->lock_till) < time()) 
+        {
+            $checkOtpReq->lock_till = null;
+            $checkOtpReq->resent_count = 1;
+            $checkOtpReq->save();
+        }
+
         if (RateLimiter::tooManyAttempts(request()->ip(), 5)) {
 
             //mail integrate here
             $user = User::first();
             $content = [
                 "name" => $user->name,
-                "body" => 'User with email address '.$request->email.' is trying brute force.',
+                "body" => 'User with email address '.$email.' is trying brute force.',
             ];
 
             if (env('IS_MAIL_ENABLE', false) == true) {
@@ -64,7 +79,6 @@ class AuthController extends Controller
 
         try 
         {
-            $email = $request->email;
             $user = User::select('*')->where('email', $email)->first();
             if (!$user)  {
                 return response()->json(prepareResult(true, [], trans('translate.user_not_exist')), config('httpcodes.not_found'));
@@ -80,21 +94,21 @@ class AuthController extends Controller
             }
             $customLog->status = 'failed';
 
-            // $loginCheck = DB::table('oauth_access_tokens')->where('user_id', $user->id)->first();
-            // if(!empty($loginCheck))
-            // {
-            //     if($request->logout_from_all_devices == 'yes')
-            //     {
-            //         DB::table('oauth_access_tokens')->where('user_id', $user->id)->delete();
-            //     }
-            //     else
-            //     {
-            //         $customLog->failure_reason = trans('translate.user_already_logged_in');
-            //         $customLog->save();
-            //         RateLimiter::hit(request()->ip(), 900);
-            //         return response()->json(prepareResult(true, ['is_logged_in'=> true], trans('translate.user_already_logged_in')), config('httpcodes.not_found'));
-            //     }
-            // }
+            $loginCheck = DB::table('oauth_access_tokens')->where('user_id', $user->id)->first();
+            if(!empty($loginCheck))
+            {
+                if($request->logout_from_all_devices == 'yes')
+                {
+                    DB::table('oauth_access_tokens')->where('user_id', $user->id)->delete();
+                }
+                else
+                {
+                    $customLog->failure_reason = trans('translate.user_already_logged_in');
+                    $customLog->save();
+                    RateLimiter::hit(request()->ip(), 900);
+                    return response()->json(prepareResult(true, ['is_logged_in'=> true], trans('translate.user_already_logged_in')), config('httpcodes.not_found'));
+                }
+            }
 
             if(in_array($user->status, [0,2])) {
                 $customLog->failure_reason = trans('translate.account_is_inactive');
@@ -103,7 +117,7 @@ class AuthController extends Controller
                 return response()->json(prepareResult(true, [], trans('translate.account_is_inactive')), config('httpcodes.unauthorized'));
             }
 
-            if(Hash::check($request->password, $user->password)) {
+            if(Hash::check($password, $user->password)) {
 
                 //old record delete
                 Otp::where('email', $email)->delete();
@@ -129,7 +143,7 @@ class AuthController extends Controller
 
                 if (env('IS_MAIL_ENABLE', false) == true) {
 
-                    $recevier = Mail::to($request->email)->send(new VerifyOtpMail($content));
+                    $recevier = Mail::to($email)->send(new VerifyOtpMail($content));
                 }
 
                 $customLog->status = 'success';
@@ -157,7 +171,7 @@ class AuthController extends Controller
     public function verifyOtp(Request $request)
     {
         $validation = \Validator::make($request->all(),[ 
-            'otp'     => 'required',
+            'otp'     => 'required|digits_between:4,6',
         ]);
 
         if ($validation->fails()) {
@@ -348,7 +362,7 @@ class AuthController extends Controller
     public function updatePassword(Request $request)
     {
         $validation = \Validator::make($request->all(),[ 
-            'password'  => 'required',
+            'password'  => 'required|min:8',
             'token'     => 'required'
         ]);
 

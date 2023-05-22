@@ -124,7 +124,7 @@ class ActionItemController extends Controller
     {
         $validation = \Validator::make($request->all(), [
             'meeting_id'      => 'required|exists:meetings,id',
-            'task'   => 'required',
+            'task'   => 'required|regex:/^[a-zA-Z0-9-_ @#]+$/',
         ]);
 
         if ($validation->fails()) {
@@ -221,7 +221,7 @@ class ActionItemController extends Controller
     {
         $validation = \Validator::make($request->all(), [
             'meeting_id'      => 'required|exists:meetings,id',
-            'task'   => 'required',
+            'task'   => 'required|regex:/^[a-zA-Z0-9-_ @#]+$/',
         ]);
 
         if ($validation->fails()) {

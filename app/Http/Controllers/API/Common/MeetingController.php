@@ -153,8 +153,8 @@ class MeetingController extends Controller
     public function store(Request $request)
     {
         $validation = \Validator::make($request->all(), [
-            'meeting_title'      => 'required',
-            'meeting_date'   => 'required',
+            'meeting_title'      => 'required|regex:/^[a-zA-Z0-9-_ @#]+$/',
+            'meeting_date'   => 'required|date',
             'meeting_time_start'   => 'required',
             'meeting_time_end'   => 'required',
             "attendees"    => "required|array|min:1",
@@ -288,7 +288,7 @@ class MeetingController extends Controller
     public function update(Request $request, $id)
     {
         $validation = \Validator::make($request->all(), [
-            'meeting_title'      => 'required',
+            'meeting_title'      => 'required|regex:/^[a-zA-Z0-9-_ @#]+$/',
             // 'meeting_ref_no'   => 'required|unique:meetings,meeting_ref_no,'.$id,
             'meeting_date'   => 'required',
             'meeting_time_start'   => 'required',

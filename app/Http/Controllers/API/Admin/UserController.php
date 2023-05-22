@@ -113,7 +113,7 @@ class UserController extends Controller
     public function store(Request $request)
     {
         $validation = \Validator::make($request->all(), [
-            'name'      => 'required',
+            'name'      => 'required|regex:/^[a-zA-Z0-9-_ ]+$/',
             'email'     => 'required|email|unique:users,email',
             'password'  => 'required|string|min:6',
         ]);
@@ -227,7 +227,7 @@ class UserController extends Controller
     public function update(Request $request, $id)
     {
         $validation = \Validator::make($request->all(), [
-            'name'      => 'required',
+            'name'      => 'required|regex:/^[a-zA-Z0-9-_ ]+$/',
             'email'     => 'email|required|unique:users,email,'.$id,
         ]);
 

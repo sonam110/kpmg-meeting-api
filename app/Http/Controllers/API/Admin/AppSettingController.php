@@ -43,7 +43,7 @@ class AppSettingController extends Controller
     public function updateSetting(Request $request)
     {
     	$validation = \Validator::make($request->all(), [
-    		'app_name'      => 'required',
+    		'app_name'      => 'required|regex:/^[a-zA-Z0-9-_ ]+$/',
     		'app_logo'   => 'required',
     		'email'   => 'required',
     	]);
