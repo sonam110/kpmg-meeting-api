@@ -14,7 +14,8 @@ use App\Mail\VerifyOtpMail;
 */
 
 Route::get('/', function () {
-    return view('welcome');
+    return 'Application working fine.';
+    //return view('welcome');
 });
 
 Route::get('/optimize-command', function () {
