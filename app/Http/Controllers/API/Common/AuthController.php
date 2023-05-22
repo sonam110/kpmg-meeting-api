@@ -171,7 +171,7 @@ class AuthController extends Controller
     public function verifyOtp(Request $request)
     {
         $validation = \Validator::make($request->all(),[ 
-            'otp'     => 'required|digits_between:4,6',
+            'otp'     => 'required|min:6',
         ]);
 
         if ($validation->fails()) {
