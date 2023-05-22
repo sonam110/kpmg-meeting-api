@@ -77,7 +77,7 @@ class NotesController extends Controller
         $validation = \Validator::make($request->all(), [
             'meeting_id'      => 'required|exists:meetings,id',
             'duration'   => 'required',
-            'notes'   => 'required|regex:/^[a-zA-Z0-9-_ @#]+$/',
+            'notes'   => 'required',
         ]);
 
         if ($validation->fails()) {
@@ -193,7 +193,7 @@ class NotesController extends Controller
         $validation = \Validator::make($request->all(), [
             'meeting_id'      => 'required|exists:meetings,id',
             'duration'   => 'required',
-            'notes'   => 'required|regex:/^[a-zA-Z0-9-_ @#]+$/',
+            'notes'   => 'required',
         ]);
 
         if ($validation->fails()) {

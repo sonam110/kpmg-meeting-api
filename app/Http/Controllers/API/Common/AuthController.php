@@ -124,7 +124,7 @@ class AuthController extends Controller
 
                 if(env('IS_MAIL_ENABLE', false) == true)
                 {
-                    $otpSend = 736878; //rand(100000,999999);
+                    $otpSend = rand(100000,999999);
                 }
                 else
                 {
