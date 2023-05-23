@@ -44,6 +44,7 @@ class AuthController extends Controller
         {
             return response(prepareResult(true, ["account_locked"=> true, "time" => $checkOtpReq->lock_till], trans('translate.too_many_otp_requests')), config('httpcodes.unauthorized'));
         }
+
         if($checkOtpReq && strtotime($checkOtpReq->lock_till) < time()) 
         {
             $checkOtpReq->lock_till = null;
@@ -131,10 +132,20 @@ class AuthController extends Controller
                     $otpSend = 736878;
                 }
                 
-                $otp = new Otp; 
+                $otp = Otp::where('email',$email)->first();
+                if(!$otp)
+                {
+                    $otp = new Otp; 
+                }
                 $otp->email = $email;
                 $otp->otp =  base64_encode($otpSend);
+                $otp->resent_count = $otp->resent_count + 1;
                 $otp->save();
+                if($otp->resent_count>=env('OTP_ATTEMPT_LIMIT', 3))
+                {
+                    $otp->lock_till = date("Y-m-d H:i:s", strtotime("10 minutes", time()));
+                    $otp->save();
+                }
                 
                 $content = [
                     "name" => $user->name,
@@ -181,7 +192,17 @@ class AuthController extends Controller
         try 
         {
             $email = $request->email;
-            $user = User::select('*')->where('email', $email)->first();
+            $user = User::where('email', $email)->first();
+            if (!$user)  {
+                return response()->json(prepareResult(true, [], trans('translate.user_not_exist')), config('httpcodes.not_found'));
+            }
+
+            $checkOtpReq = Otp::where('email', $email)->whereNotNull('lock_till')->first();
+            if($checkOtpReq && strtotime($checkOtpReq->lock_till) > time()) 
+            {
+                return response(prepareResult(true, ["account_locked"=> true, "time" => $checkOtpReq->lock_till], trans('translate.too_many_otp_attempts')), config('httpcodes.unauthorized'));
+            }
+
             //create-log
             $customLog = new CustomLog;
             $customLog->type = 'login';
@@ -193,17 +214,36 @@ class AuthController extends Controller
             $customLog->status = 'failed';
             $customLog->created_by = $user->id;
             
-            $otpCheck = Otp::where('email',$email)->where('otp',base64_encode($request->otp))->first();
+            $otpCheck = Otp::where('email',$email)->first();
+            if(!$otpCheck)
+            {
+                return response()->json(prepareResult(true, [], trans('translate.otp_not_exist')), config('httpcodes.not_found'));
+            }
 
-            if (!$otpCheck)  {
+            if ($otpCheck->otp != base64_encode($request->otp))  {
+                //update validation case
+                $otpCheck->resent_count = $otpCheck->resent_count + 1;
+                $otpCheck->updated_at = $otpCheck->updated_at;
+                $otpCheck->save();
+
+                if($otpCheck->resent_count>=env('OTP_ATTEMPT_LIMIT', 3))
+                {
+                    $otpCheck->lock_till = date("Y-m-d H:i:s", strtotime("10 minutes", time()));
+                    $otpCheck->updated_at = $otpCheck->updated_at;
+                    $otpCheck->save();
+                }
+
                 $customLog->failure_reason = trans('translate.invalid_otp');
                 $customLog->save();
                 return response()->json(prepareResult(true, [], trans('translate.invalid_otp')), config('httpcodes.not_found'));
             }
-            elseif((strtotime($otpCheck->updated_at) + 600) < strtotime(date('Y-m-d H:i:s')))
+            elseif((strtotime($otpCheck->updated_at) + 600) < time())
             {
                 $customLog->failure_reason = trans('translate.otp_expired');
                 $customLog->save();
+
+                //deleted expired OTP
+                $otpCheck->delete();
                 return response()->json(prepareResult(true, [], trans('translate.otp_expired')), config('httpcodes.not_found'));
             }
             $user = User::select('*')->where('email', $email)->first();

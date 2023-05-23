@@ -158,6 +158,20 @@ class RoleController extends Controller
                 DB::commit();
                 if($roleInfo) {
                     $roleInfo->syncPermissions($request->permissions);
+
+                    /*
+                    $roleUsers = DB::table('model_has_roles')
+                    ->where('role_id',$roleInfo->id)
+                    ->get();
+                    foreach ($roleUsers as $key => $value) 
+                    {
+                        $user = User::find($value->model_id);
+                        if(!empty($user))
+                        {
+                            $user->syncPermissions($request->permissions);
+                        }
+                    }
+                    */
                 }
                 return response()->json(prepareResult(false, $roleInfo, trans('translate.updated')),config('httpcodes.success'));
             }

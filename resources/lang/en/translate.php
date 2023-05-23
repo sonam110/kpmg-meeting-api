@@ -1,5 +1,8 @@
 <?php
 return [
+    'too_many_otp_attempts' => 'OTP entered in the last three attempts is wrong, Please wait 10 minutes then try again.',
+    'too_many_otp_requests' => 'Too many OTP requests, Please wait 10 minutes then try again.',
+    'otp_not_exist' => 'OTP not found with this user, Please regenrate.',
     'mobile_number_not_found' => 'Mobile number not found.',
     'time_not_less_then_current_time' => 'Time not allowed, Please choose other time or greater than current time.',
     'no_records_found' => 'No records found.',
