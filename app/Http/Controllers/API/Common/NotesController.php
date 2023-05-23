@@ -30,7 +30,11 @@ class NotesController extends Controller
     public function notes(Request $request)
     {
         try {
-            $query = MeetingNote::orderby('id','DESC')->with('meeting','documents','createdBy:id,name,email','editedBy:id,name,email','actionItems.owner:id,name,email');
+            $query = MeetingNote::orderby('id','DESC')->with('meeting','documents','createdBy:id,name,email','editedBy:id,name,email','actionItems.owner:id,name,email')
+                ->with(['actionItems' => function($q)  {
+                    $q->where('owner_id', auth()->id())
+                        ->orWhere('created_by', auth()->id());
+                }]);
             
             if(!empty($request->meeting_id))
             {
@@ -169,6 +173,10 @@ class NotesController extends Controller
          try {
             $meetingNote = MeetingNote::select('*')
                 ->with('meeting','documents','createdBy:id,name,email','editedBy:id,name,email','actionItems')
+                ->with(['actionItems' => function($q)  {
+                    $q->where('owner_id', auth()->id())
+                        ->orWhere('created_by', auth()->id());
+                }])
                 ->find($id);
             if($meetingNote)
             {

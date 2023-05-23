@@ -425,7 +425,7 @@ class ActionItemController extends Controller
             $meeting = $actionItem->meeting;
             $attendees = $meeting->attendees;
             foreach ($attendees as $key => $attendee) {
-                if(!empty($attendee->user))
+                if(!empty($attendee->user) && !empty(@$attendee->user->email))
                 {
                     // if (env('IS_MAIL_ENABLE', false) == true) {
                         $content = [

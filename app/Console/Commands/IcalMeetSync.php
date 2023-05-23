@@ -24,6 +24,7 @@ use DB;
 use File;
 use Str;
 use ICal\ICal;
+use Log;
 
 class IcalMeetSync extends Command
 {
@@ -155,7 +156,7 @@ class IcalMeetSync extends Command
                                         $this->addAttendees($attendees,$checkMsgIExist);
                                     }
 
-                                    Log::channel('mailsync')->info('id already-'.@$checkMsgIExist->id);
+                                    \Log::channel('mailsync')->info('id already-'.@$checkMsgIExist->id);
                                 }
                                 
                                 if (empty($checkMsgIExist)) 

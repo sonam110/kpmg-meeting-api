@@ -26,11 +26,19 @@ function addUser($email)
 {
     $randomNo = generateRandomNumber(10);
     $password = Hash::make($randomNo);
-    $masterUser = new MasterUser;
-    $masterUser->name = $email;
-    $masterUser->email  = $email;
-    $masterUser->password = $password;
-    $masterUser->save();
+    $checkUser = MasterUser::where('email', $email)->first();
+    if(!$checkUser)
+    {
+        $masterUser = new MasterUser;
+        $masterUser->name = $email;
+        $masterUser->email  = $email;
+        $masterUser->password = $password;
+        $masterUser->save();
+    }
+    else
+    {
+        $masterUser = $checkUser;
+    }
 
     $user = new User;
     $user->id = $masterUser->id;
