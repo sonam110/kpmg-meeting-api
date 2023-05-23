@@ -36,13 +36,13 @@ class AuthController extends Controller
      */
     public function login(Request $request)
     {
-        $email = base64_decode($request->email);
-        $password = base64_decode($request->password);
+        $email = ($request->email);
+        $password = ($request->password);
 
         $checkOtpReq = Otp::where('email', $email)->whereNotNull('lock_till')->first();
         if($checkOtpReq && strtotime($checkOtpReq->lock_till) > time()) 
         {
-            return response(prepareResult(true, ["account_locked"=> true, "time" => $checkOtpReq->lock_till], trans('translate.too_many_otp_requests')), config('httpcodes.unauthorized'));
+            return response(prepareResult(true, ["account_locked"=> true, "time" => timeDiff($checkOtpReq->lock_till)], trans('translate.too_many_otp_requests')), config('httpcodes.unauthorized'));
         }
 
         if($checkOtpReq && strtotime($checkOtpReq->lock_till) < time()) 
@@ -53,6 +53,8 @@ class AuthController extends Controller
         }
 
         if (RateLimiter::tooManyAttempts(request()->ip(), 5)) {
+
+            $seconds = RateLimiter::availableIn($this->throttleKey());
 
             //mail integrate here
             $user = User::first();
@@ -66,7 +68,7 @@ class AuthController extends Controller
                 $recevier = Mail::to($user->email)->send(new TooManyAttemptMail($content));
             }
 
-            return response()->json(prepareResult(true, ["account_locked"=> true,"time"=>date('Y-m-d H:i:s')], 'Too many fail login attempt your ip has restricted for 15 minutes.'), config('httpcodes.unauthorized'));
+            return response()->json(prepareResult(true, ["account_locked"=> true, "time"=> $seconds], 'Too many fail login attempt your ip has restricted for 15 minutes.'), config('httpcodes.unauthorized'));
         }
 
         $validation = \Validator::make($request->all(),[ 
@@ -106,7 +108,7 @@ class AuthController extends Controller
                 {
                     $customLog->failure_reason = trans('translate.user_already_logged_in');
                     $customLog->save();
-                    RateLimiter::hit(request()->ip(), 900);
+                    RateLimiter::hit(request()->ip(), 900); //in seconds
                     return response()->json(prepareResult(true, ['is_logged_in'=> true], trans('translate.user_already_logged_in')), config('httpcodes.not_found'));
                 }
             }
@@ -173,6 +175,14 @@ class AuthController extends Controller
     }
 
     /**
+     * for checking RateLimiter by IP address
+     */
+    public function throttleKey()
+    {
+        return \Str::lower(request()->ip());
+    }
+
+    /**
      * Otp verification on the specified resource in storage.
      *
      * @param  \Illuminate\Http\Request  $request
@@ -200,7 +210,7 @@ class AuthController extends Controller
             $checkOtpReq = Otp::where('email', $email)->whereNotNull('lock_till')->first();
             if($checkOtpReq && strtotime($checkOtpReq->lock_till) > time()) 
             {
-                return response(prepareResult(true, ["account_locked"=> true, "time" => $checkOtpReq->lock_till], trans('translate.too_many_otp_attempts')), config('httpcodes.unauthorized'));
+                return response(prepareResult(true, ["account_locked"=> true, "time" => timeDiff($checkOtpReq->lock_till)], trans('translate.too_many_otp_attempts')), config('httpcodes.unauthorized'));
             }
 
             //create-log

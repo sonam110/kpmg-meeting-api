@@ -22,6 +22,11 @@ function getUser() {
     return auth('api')->user();
 }
 
+function timeDiff($time)
+{
+    return strtotime($time) - time();
+}
+
 function addUser($email)
 {
     $randomNo = generateRandomNumber(10);
