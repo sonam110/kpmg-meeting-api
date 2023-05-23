@@ -45,7 +45,7 @@ class AuthController extends Controller
             return response(prepareResult(true, ["account_locked"=> true, "time" => timeDiff($checkOtpReq->lock_till)], trans('translate.too_many_otp_requests')), config('httpcodes.unauthorized'));
         }
 
-        if($checkOtpReq && strtotime($checkOtpReq->lock_till) < time()) 
+        if($checkOtpReq && !empty($checkOtpReq->lock_till) && strtotime($checkOtpReq->lock_till) < time()) 
         {
             $checkOtpReq->lock_till = null;
             $checkOtpReq->resent_count = 1;
@@ -211,6 +211,13 @@ class AuthController extends Controller
             if($checkOtpReq && strtotime($checkOtpReq->lock_till) > time()) 
             {
                 return response(prepareResult(true, ["account_locked"=> true, "time" => timeDiff($checkOtpReq->lock_till)], trans('translate.too_many_otp_attempts')), config('httpcodes.unauthorized'));
+            }
+
+            if($checkOtpReq && !empty($checkOtpReq->lock_till) && strtotime($checkOtpReq->lock_till) < time()) 
+            {
+                $checkOtpReq->lock_till = null;
+                $checkOtpReq->resent_count = 0;
+                $checkOtpReq->save();
             }
 
             //create-log
