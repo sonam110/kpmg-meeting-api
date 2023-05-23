@@ -36,8 +36,8 @@ class AuthController extends Controller
      */
     public function login(Request $request)
     {
-        $email = ($request->email);
-        $password = ($request->password);
+        $email = base64_decode($request->email);
+        $password = base64_decode($request->password);
 
         $checkOtpReq = Otp::where('email', $email)->whereNotNull('lock_till')->first();
         if($checkOtpReq && strtotime($checkOtpReq->lock_till) > time()) 
