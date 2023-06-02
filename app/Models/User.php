@@ -58,7 +58,7 @@ class User extends Authenticatable
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
-            ->logOnly(['*'])
+            ->logOnly(['name', 'email', 'role_id', 'mobile_number', 'address', 'designation', 'created_by', 'status', 'password_last_updated'])
             ->logOnlyDirty()
             ->useLogName('User')
             ->setDescriptionForEvent(fn(string $eventName) => "User has been {$eventName}");

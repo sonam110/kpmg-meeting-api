@@ -16,7 +16,7 @@ class ActivityController extends Controller
 {
     public function __construct()
     {
-        $this->middleware('logs-browse');
+        $this->middleware('permission:logs-browse');
     }
 
     public function activities(Request $request)
