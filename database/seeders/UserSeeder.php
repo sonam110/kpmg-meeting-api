@@ -111,6 +111,7 @@ class UserSeeder extends Seeder
             'user-delete',
             'user-edit',
             'user-read',
+            'logs-browse',
         ];
         foreach ($adminPermissions as $key => $permission) {
             $adminRole->givePermissionTo($permission);

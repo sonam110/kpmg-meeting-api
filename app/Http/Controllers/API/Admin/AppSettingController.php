@@ -10,6 +10,7 @@ use Validator;
 use Auth;
 use Exception;
 use DB;
+
 class AppSettingController extends Controller
 {
     /**

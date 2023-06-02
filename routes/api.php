@@ -127,6 +127,12 @@ Route::namespace('App\Http\Controllers\API\Admin')->group(function () {
             Route::post('update-setting','updateSetting')->name('update-setting');
         });
 
+        /*---------------------All system activity Logs------------------------*/
+        Route::controller(ActivityController::class)->group(function () {
+            Route::post('activities', 'activities')->name('activities');
+            Route::get('activities-info/{activity_id}', 'activitiesInfo')->name('activities-info');
+        });
+
         /*---------------------Logs------------------------*/
         Route::controller(LogController::class)->group(function () {
             Route::post('logs','logs')->name('logs');
