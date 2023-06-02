@@ -12,9 +12,13 @@ use Spatie\Permission\Models\Permission;
 //use Laravel\Sanctum\HasApiTokens;
 use Laravel\Passport\HasApiTokens;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Casts\Attribute;
+use Spatie\Activitylog\Traits\LogsActivity;
+use Spatie\Activitylog\LogOptions;
+
 class User extends Authenticatable
 {
-    use HasApiTokens, HasFactory, Notifiable,SoftDeletes,HasRoles,Notifiable;
+    use HasApiTokens, HasFactory, Notifiable, SoftDeletes,HasRoles, Notifiable, LogsActivity;
 
     /**
      * The attributes that are mass assignable.
@@ -50,6 +54,36 @@ class User extends Authenticatable
     protected $casts = [
         'email_verified_at' => 'datetime',
     ];
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly(['*'])
+            ->logOnlyDirty()
+            ->useLogName('User')
+            ->setDescriptionForEvent(fn(string $eventName) => "User has been {$eventName}");
+    }
+
+    /*
+        // encryption AES-256-CBC
+        'key' => env('APP_KEY'),
+        'cipher' => 'AES-256-CBC',
+    */
+    protected function name(): Attribute
+    {
+        return Attribute::make(
+            get: fn ($value) => decrypt($value),
+            set: fn ($value) => encrypt($value),
+        );
+    }
+
+    protected function email(): Attribute
+    {
+        return Attribute::make(
+            get: fn ($value) => decrypt($value),
+            set: fn ($value) => encrypt($value),
+        );
+    }
 
     public function role()
     {

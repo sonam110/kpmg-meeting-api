@@ -8,10 +8,21 @@ use App\Models\Meeting;
 use App\Models\MeetingDocument;
 use App\Models\User;
 use App\Models\ActionItem;
+use Spatie\Activitylog\Traits\LogsActivity;
+use Spatie\Activitylog\LogOptions;
 
 class MeetingNote extends Model
 {
-    use HasFactory;
+    use HasFactory, LogsActivity;
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly(['*'])
+            ->logOnlyDirty()
+            ->useLogName('Meeting note')
+            ->setDescriptionForEvent(fn(string $eventName) => "Meeting note has been {$eventName}");
+    }
 
     public function meeting()
     {

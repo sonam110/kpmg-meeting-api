@@ -20,7 +20,8 @@ class LogController extends Controller
     public function logs(Request $request)
     {
         try {
-            $query = CustomLog::orderBy('id','DESC')->with('createdBy:id,name,email');
+            $query = CustomLog::orderBy('id','DESC')
+                ->with('createdBy:id,name,email');
             if(!empty($request->per_page_record))
             {
                 $perPage = $request->per_page_record;

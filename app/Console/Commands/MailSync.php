@@ -9,7 +9,6 @@ use App\Models\User;
 use App\Models\MasterUser;
 use App\Models\Module;
 use App\Models\AssigneModule;
-use App\Models\MeetingLog;
 use voku\helper\HtmlDomParser;
 use Mail;
 use App\Mail\MeetingMail;

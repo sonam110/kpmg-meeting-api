@@ -96,6 +96,14 @@ class RoleController extends Controller
             DB::commit();
             if($role) {
                 $role->syncPermissions($request->permissions);
+
+                activity()
+                ->useLog('Role')
+                ->event('created')
+                ->performedOn($role)
+                ->causedBy(auth()->user())
+                ->withProperties(["attributes" => $role])
+                ->log('Role has been created');
             }
             
             return response()->json(prepareResult(false, $role, trans('translate.created')),config('httpcodes.created'));
@@ -159,20 +167,29 @@ class RoleController extends Controller
                 if($roleInfo) {
                     $roleInfo->syncPermissions($request->permissions);
 
-                    /*
+                    // sync new role permissions with user
                     $roleUsers = DB::table('model_has_roles')
                     ->where('role_id',$roleInfo->id)
                     ->get();
                     foreach ($roleUsers as $key => $value) 
                     {
                         $user = User::find($value->model_id);
-                        if(!empty($user))
+                        if($user)
                         {
                             $user->syncPermissions($request->permissions);
                         }
                     }
-                    */
+                    
                 }
+
+                activity()
+                ->useLog('Role')
+                ->event('updated')
+                ->performedOn($roleInfo)
+                ->causedBy(auth()->user())
+                ->withProperties(["old" => $old,"attributes" => $roleInfo])
+                ->log('Role has been updated');
+
                 return response()->json(prepareResult(false, $roleInfo, trans('translate.updated')),config('httpcodes.success'));
             }
            return response()->json(prepareResult(true, [],'No Role found', config('httpcodes.not_found')));
@@ -198,6 +215,15 @@ class RoleController extends Controller
             if($roleInfo)
             {
                 $roleInfo->delete();
+
+                activity()
+                ->useLog('Role')
+                ->event('deleted')
+                ->performedOn($role)
+                ->causedBy(auth()->user())
+                ->withProperties(["old" => $old])
+                ->log('Role has been deleted');
+
                 return response()->json(prepareResult(false, [], trans('translate.deleted')), config('httpcodes.success'));
             }
             return response()->json(prepareResult(true, [],'No Role found', config('httpcodes.not_found')));

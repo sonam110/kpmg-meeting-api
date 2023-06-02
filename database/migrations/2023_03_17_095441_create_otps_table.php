@@ -16,7 +16,7 @@ return new class extends Migration
         Schema::create('otps', function (Blueprint $table) {
             $table->id();
             $table->string('email');
-            $table->string('otp');
+            $table->string('otp')->comment('base64_encode format');
             $table->integer('resent_count');
             $table->timestamp('lock_till');
             $table->timestamps();

@@ -46,7 +46,17 @@ class UserController extends Controller
 
             if(!empty($request->email))
             {
-                $query->where('email', 'LIKE', '%'.$request->email.'%');
+                $checkEmails = User::select('id','email')
+                    ->get();
+                $ids = [];
+                foreach ($checkEmails as $key => $checkEmail) 
+                {
+                    if($checkEmail->email==$request->email)
+                    {
+                        $ids[] = $checkEmail->id;
+                    }
+                }
+                $query->whereIn('id', $ids);
             }
 
             if(!empty($request->name))
@@ -122,20 +132,46 @@ class UserController extends Controller
             return response(prepareResult(true, $validation->messages(), $validation->messages()->first()), config('httpcodes.bad_request'));
         }
 
+        if(checkUserExist($request->email))
+        {
+            return response(prepareResult(true, trans('translate.user_already_exist_with_this_email'), trans('translate.user_already_exist_with_this_email')), config('httpcodes.internal_server_error'));
+        }
+
         DB::beginTransaction();
         try {
-            $masterUser = new MasterUser;
-            $masterUser->name = $request->name;
-            $masterUser->email  = $request->email;
-            $masterUser->password =  Hash::make($request->password);
-            $masterUser->save();
+            $password = "meet@DummyPwd2023";
+            $email = $request->email;
+            $checkMasterUsers = MasterUser::get();
+            $masterUser = null;
+            foreach ($checkMasterUsers as $key => $checkMasterUser) 
+            {
+                if($email==$checkMasterUser->email)
+                {
+                    $masterUser = $checkMasterUser;
+                    break;
+                }
+            }
+            if(empty($masterUser))
+            {
+                $masterUser = new MasterUser;
+                $masterUser->name = $request->name;
+                $masterUser->email  = $request->email;
+                $masterUser->password =  Hash::make($password);
+                $masterUser->save();
+
+                /*-------Assigne Meeting module for this user*/
+                $assigneModule = new AssigneModule;
+                $assigneModule->module_id  = '1';
+                $assigneModule->user_id  = $masterUser->id;
+                $assigneModule->save();
+            }
 
             $user = new User;
             $user->id = $masterUser->id;
             $user->role_id = $request->role_id;
             $user->name = $request->name;
             $user->email  = $request->email;
-            $user->password =  Hash::make($request->password);
+            $user->password =  Hash::make($password);
             $user->mobile_number = $request->mobile_number;
             $user->address = $request->address;
             $user->designation = $request->designation;
@@ -143,15 +179,6 @@ class UserController extends Controller
             $user->save();
             $user['id'] = $masterUser->id;
 
-
-
-            /*-------Assigne Meeting module for this user*/
-            $assigneModule = new AssigneModule;
-            $assigneModule->module_id  = '1';
-            $assigneModule->user_id  = $masterUser->id;
-            $assigneModule->save();
-
-        
             //Role and permission sync
             $role = Role::where('id', $request->role_id)->first();
             $permissions = $role->permissions->pluck('name');

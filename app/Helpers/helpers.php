@@ -14,12 +14,25 @@ function prepareResult($error, $data, $msg)
     return ['error' => $error, 'data' => $data, 'message' => $msg];
 }
 
-function generateRandomNumber($len = 12) {
+function generateRandomString($len = 12) {
     return Str::random($len);
 }
 
 function getUser() {
     return auth('api')->user();
+}
+
+function checkUserExist($email)
+{
+   $users = User::select('email')->get();
+   foreach ($users as $key => $user) 
+   {
+     if($email==$user->email)
+     {
+        return true;
+     }
+   }
+   return false;
 }
 
 function timeDiff($time)
@@ -29,68 +42,92 @@ function timeDiff($time)
 
 function addUser($email)
 {
-    $randomNo = generateRandomNumber(10);
+    $randomNo = generateRandomString(10);
     $password = Hash::make($randomNo);
-    $checkUser = MasterUser::where('email', $email)->first();
-    if(!$checkUser)
+
+    $checkMasterUsers = MasterUser::get();
+    $masterUser = null;
+    foreach ($checkMasterUsers as $key => $checkMasterUser) 
+    {
+        if($email==$checkMasterUser->email)
+        {
+            $masterUser = $checkMasterUser;
+            break;
+        }
+    }
+
+    if(empty($masterUser))
     {
         $masterUser = new MasterUser;
         $masterUser->name = $email;
         $masterUser->email  = $email;
         $masterUser->password = $password;
         $masterUser->save();
+
+        /*-------Assigne Meeting module for this user*/
+        $assigneModule = new AssigneModule;
+        $assigneModule->module_id  = '1';
+        $assigneModule->user_id  = $masterUser->id;
+        $assigneModule->save();
     }
-    else
+
+    $checkEmails = User::get();
+    $user = null;
+    foreach ($checkEmails as $key => $checkEmail) 
     {
-        $masterUser = $checkUser;
+        if($checkEmail->email==$email)
+        {
+            $user = $checkEmail;
+            break;
+        }
     }
-
-    $user = new User;
-    $user->id = $masterUser->id;
-    $user->role_id = '2';
-    $user->name = $email;
-    $user->email  = $email;
-    $user->password = $password;
-    $user->created_by = auth()->user()->id;
-    $user->save();
-
-    //Delete if entry exists
-    DB::table('password_resets')->where('email', $email)->delete();
-
-    $token = \Str::random(64);
-    DB::table('password_resets')->insert([
-      'email' => $email, 
-      'token' => $token, 
-      'created_at' => \Carbon\Carbon::now()
-    ]);
-
-    $baseRedirURL = env('FRONT_URL');
-    // Login credentials are following - email:'.$user->email.' , password:'.$randomNo.'.
-    $content = [
-        "name" => $user->name,
-        "body" => 'You have been registered.<br>To reset your password Please click on the link -> <a href='.$baseRedirURL.'/reset-password/'.$token.' style="color: #000;font-size: 18px;text-decoration: underline, font-family: Roboto Condensed, sans-serif;"  target="_blank">Reset your password </a>',
-    ];
-
-    if (env('IS_MAIL_ENABLE', false) == true) {
-       
-        $recevier = Mail::to($email)->send(new WelcomeMail($content));
-    }
-
-    /*-------Assigne Meeting module for this user*/
-    $assigneModule = new AssigneModule;
-    $assigneModule->module_id  = '1';
-    $assigneModule->user_id  = $masterUser->id;
-    $assigneModule->save();
-
-
-    //Role and permission sync
-    $role = Role::where('id','2')->first();
-    $permissions = $role->permissions->pluck('name');
     
-    $user->assignRole($role->name);
-    foreach ($permissions as $key => $permission) {
-        $user->givePermissionTo($permission);
+    if(empty($user))
+    {
+        $user = new User;
+        $user->id = $masterUser->id;
+        $user->role_id = '2';
+        $user->name = $email;
+        $user->email  = $email;
+        $user->password = $password;
+        $user->created_by = auth()->user()->id;
+        $user->save();
+
+        //Delete if entry exists
+        DB::table('password_resets')->where('email', $email)->delete();
+
+        $token = \Str::random(64);
+        DB::table('password_resets')->insert([
+          'email' => $email, 
+          'token' => $token, 
+          'created_at' => \Carbon\Carbon::now()
+        ]);
+
+        $baseRedirURL = env('FRONT_URL');
+        // Login credentials are following - email:'.$user->email.' , password:'.$randomNo.'.
+        $content = [
+            "name" => $user->name,
+            "body" => 'You have been registered.<br>To reset your password Please click on the link -> <a href='.$baseRedirURL.'/reset-password/'.$token.' style="color: #000;font-size: 18px;text-decoration: underline, font-family: Roboto Condensed, sans-serif;"  target="_blank">Reset your password </a>',
+        ];
+
+        if (env('IS_MAIL_ENABLE', false) == true) {
+           
+            $recevier = Mail::to($email)->send(new WelcomeMail($content));
+        }
+
+        
+
+
+        //Role and permission sync
+        $role = Role::where('id','2')->first();
+        $permissions = $role->permissions->pluck('name');
+        
+        $user->assignRole($role->name);
+        foreach ($permissions as $key => $permission) {
+            $user->givePermissionTo($permission);
+        }
     }
+    
     return $masterUser;
 }
 

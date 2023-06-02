@@ -11,7 +11,6 @@ use App\Models\ActionItem;
 use App\Models\MeetingMailLog;
 use App\Models\Meeting;
 use App\Models\MeetingDocument;
-use App\Models\MeetingLog;
 use App\Models\Attendee;
 use Illuminate\Support\Carbon;
 use App\Models\User;
@@ -31,7 +30,6 @@ class DashboardController extends Controller
                 $data['userCount'] = User::where('role_id','!=','1')->count();
                 $data['meetingCount'] = Meeting::count();
                 $data['todayMeetingCount'] = Meeting::whereDate('meeting_date',date('Y-m-d'))->count();
-               
             }
             elseif($user->role_id == 2)
             {

@@ -82,19 +82,23 @@ class AuthController extends Controller
 
         try 
         {
-            $user = User::select('*')->where('email', $email)->first();
+            $allUsers = User::get();
+            $user = false;
+            foreach ($allUsers as $key => $matchEmail) {
+                if($matchEmail->email==$email)
+                {
+                    $user = $matchEmail;
+                    break;
+                }
+            }
             if (!$user)  {
-                return response()->json(prepareResult(true, [], trans('translate.user_not_exist')), config('httpcodes.not_found'));
+                return response(prepareResult(true, [], trans('translate.user_not_exist')), config('httpcodes.not_found'));
             }
             ////create-log
             $customLog = new CustomLog;
             $customLog->created_by = $user->id;
             $customLog->type = 'login';
             $customLog->event = 'login';
-            if (env('IS_LOCATION_ENABLE', false) == true) {
-                $customLog->ip_address = $request->ip();
-                $customLog->location = json_encode(\Location::get($request->ip()));
-            }
             $customLog->status = 'failed';
 
             $loginCheck = DB::table('oauth_access_tokens')->where('user_id', $user->id)->first();
@@ -121,9 +125,6 @@ class AuthController extends Controller
             }
 
             if(Hash::check($password, $user->password)) {
-
-                //old record delete
-                Otp::where('email', $email)->delete();
 
                 if(env('IS_MAIL_ENABLE', false) == true)
                 {
@@ -202,7 +203,15 @@ class AuthController extends Controller
         try 
         {
             $email = $request->email;
-            $user = User::where('email', $email)->first();
+            $allUsers = User::get();
+            $user = false;
+            foreach ($allUsers as $key => $matchEmail) {
+                if($matchEmail->email==$email)
+                {
+                    $user = $matchEmail;
+                    break;
+                }
+            }
             if (!$user)  {
                 return response()->json(prepareResult(true, [], trans('translate.user_not_exist')), config('httpcodes.not_found'));
             }
@@ -224,10 +233,6 @@ class AuthController extends Controller
             $customLog = new CustomLog;
             $customLog->type = 'login';
             $customLog->event = 'otp-verify';
-            if (env('IS_LOCATION_ENABLE', false) == true) {
-                $customLog->ip_address = $request->ip();
-                $customLog->location = json_encode(\Location::get($request->ip()));
-            }
             $customLog->status = 'failed';
             $customLog->created_by = $user->id;
             
@@ -263,7 +268,7 @@ class AuthController extends Controller
                 $otpCheck->delete();
                 return response()->json(prepareResult(true, [], trans('translate.otp_expired')), config('httpcodes.not_found'));
             }
-            $user = User::select('*')->where('email', $email)->first();
+
             $accessToken = $user->createToken('authToken')->accessToken;
             $user['access_token'] = $accessToken;
             $role   = Role::where('id', $user->role_id)->first();
@@ -274,10 +279,6 @@ class AuthController extends Controller
 
             $log = new LoginLog;
             $log->user_id = $user->id;
-            if (env('IS_LOCATION_ENABLE', false) == true) {
-                $log->ip_address = $request->ip();
-                $log->location = json_encode(\Location::get($request->ip()));
-            }
             $log->save();
 
             $customLog->status = 'success';
@@ -312,10 +313,6 @@ class AuthController extends Controller
                 $customLog->created_by = auth()->id();
                 $customLog->type = 'logout';
                 $customLog->event = 'logout';
-                if (env('IS_LOCATION_ENABLE', false) == true) {
-                    $customLog->ip_address = $request->ip();
-                    $customLog->location = json_encode(\Location::get($request->ip()));
-                }
                 $customLog->status = 'success';
                 $customLog->save();
 
@@ -355,20 +352,25 @@ class AuthController extends Controller
 
         try 
         {
-            $user = User::where('email',$request->email)->first();
+            $email = $request->email;
+            $allUsers = User::get();
+            $user = false;
+            foreach ($allUsers as $key => $matchEmail) {
+                if($matchEmail->email==$email)
+                {
+                    $user = $matchEmail;
+                    break;
+                }
+            }
             if (!$user) {
-                return response()->json(prepareResult(true, [], trans('translate.user_not_exist')), config('httpcodes.not_found'));
+                return response(prepareResult(true, [], trans('translate.user_not_exist')), config('httpcodes.not_found'));
             }
             //create-log
             $customLog = new CustomLog;
             $customLog->created_by = $user->id;
             $customLog->type = 'forgot-password';
             $customLog->event = 'forgot-password';
-            if (env('IS_LOCATION_ENABLE', false) == true) {
-                $customLog->ip_address = $request->ip();
-                $customLog->location = json_encode(\Location::get($request->ip()));
-            }
-
+            
             if(in_array($user->status, [0,2])) {
                 $customLog->status = 'failed';
                 $customLog->failure_reason = trans('translate.account_is_inactive');
@@ -436,9 +438,19 @@ class AuthController extends Controller
                 return response()->json(prepareResult(true, [], trans('translate.token_expired_or_not_found')), config('httpcodes.unauthorized'));
             }
 
-            $user = User::where('email',$tokenExist->email)->first();
+            $email = $tokenExist->email;
+            $allUsers = User::get();
+            $user = false;
+            foreach ($allUsers as $key => $matchEmail) {
+                if($matchEmail->email==$email)
+                {
+                    $user = $matchEmail;
+                    break;
+                }
+            }
+
             if (!$user) {
-                return response()->json(prepareResult(true, [], trans('translate.user_not_exist')), config('httpcodes.not_found'));
+                return response(prepareResult(true, [], trans('translate.user_not_exist')), config('httpcodes.not_found'));
             } 
 
             if($user->role_id == 1)
@@ -458,11 +470,8 @@ class AuthController extends Controller
             $customLog->created_by = $user->id;
             $customLog->type = 'update-password';
             $customLog->event = 'update-password';
-            if (env('IS_LOCATION_ENABLE', false) == true) {
-                $customLog->ip_address = $request->ip();
-                $customLog->location = json_encode(\Location::get($request->ip()));
-            }
             $customLog->status = 'failed';
+            
             if ($validation->fails()) {
                 $customLog->failure_reason = $validation->messages()->first();
                 $customLog->save();
@@ -489,8 +498,12 @@ class AuthController extends Controller
                 return response()->json(prepareResult(true, [], trans('translate.account_is_inactive')), config('httpcodes.unauthorized'));
             }
 
-            User::where('email', $tokenExist->email)
-            ->update(['password' => Hash::make($request->password),'password_last_updated' => date('Y-m-d')]);
+
+
+            $user->update([
+                'password' => Hash::make($request->password),
+                'password_last_updated' => date('Y-m-d')
+            ]);
 
             $customLog->status = 'success';
             $customLog->save();
@@ -547,10 +560,6 @@ class AuthController extends Controller
             $customLog->created_by = $user->id;
             $customLog->type = 'change-password';
             $customLog->event = 'change-password';
-            if (env('IS_LOCATION_ENABLE', false) == true) {
-                $customLog->ip_address = $request->ip();
-                $customLog->location = json_encode(\Location::get($request->ip()));
-            }
             $customLog->status = 'failed';
 
             if ($validation->fails()) {
@@ -579,8 +588,10 @@ class AuthController extends Controller
             }
 
             if(Hash::check($request->old_password, $user->password)) {
-                $user = User::where('email', auth()->user()->email)
-                ->update(['password' => Hash::make($request->password),'password_last_updated' => date('Y-m-d')]);
+                $user->update([
+                    'password' => Hash::make($request->password),
+                    'password_last_updated' => date('Y-m-d')]
+                );
 
                 $content = [
                     "name" => auth()->user()->name,

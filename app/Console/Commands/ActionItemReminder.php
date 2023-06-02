@@ -33,17 +33,25 @@ class ActionItemReminder extends Command
     public function handle()
     {
         $dayBeforeFiveDays = date("Y-m-d",strtotime('-5 days'));
-        $allactionItems = ActionItem::whereDate('created_at','<=',$dayBeforeFiveDays)->where('status','!=','completed')->get();
-        foreach ($allactionItems as $value) {
-            $user = User::find($value->owner_id);
-            $content = [
-                "name" => @$user->name,
-                "body" => 'Your Assigned Task for meeting  '.@$value->meeting->meeting_title.' has not completed yet.',
-            ];
 
-            if (env('IS_MAIL_ENABLE', false) == true) {
-               
-                $recevier = Mail::to(@$user->email)->send(new TaskReminderMail($content));
+        $allactionItems = ActionItem::whereDate('created_at','<=',$dayBeforeFiveDays)
+            ->where('status','!=','completed')
+            ->get();
+
+        foreach ($allactionItems as $value) 
+        {
+            $user = User::find($value->owner_id);
+            if($user)
+            {
+                $content = [
+                    "name" => $user->name,
+                    "body" => 'Your Assigned Task for meeting  '.$value->meeting->meeting_title.' has not completed yet.',
+                ];
+
+                if (env('IS_MAIL_ENABLE', false) == true) {
+                   
+                    $recevier = Mail::to($user->email)->send(new TaskReminderMail($content));
+                }
             }
         }
         return;

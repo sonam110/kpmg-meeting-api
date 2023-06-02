@@ -60,11 +60,7 @@ class AppSettingController extends Controller
     		$customLog->created_by = auth()->id();
     		$customLog->type = 'app-setting';
     		$customLog->event = 'update';
-    		if (env('IS_LOCATION_ENABLE', false) == true) {
-                $customLog->ip_address = $request->ip();
-                $customLog->location = json_encode(\Location::get($request->ip()));
-            }
-
+    		
     		if(!$appSetting)
     		{
     			$customLog->status = 'failed';

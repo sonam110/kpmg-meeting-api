@@ -10,7 +10,6 @@ use App\Models\User;
 use App\Models\MasterUser;
 use App\Models\Module;
 use App\Models\AssigneModule;
-use App\Models\MeetingLog;
 use voku\helper\HtmlDomParser;
 use Mail;
 use App\Mail\MeetingMail;
@@ -68,7 +67,7 @@ class MailSyncController extends Controller
                     {
                         $creation_date = date('Y-m-d',strtotime($overview->date));
                         $getResults = $this->getmsg($mbox, $overview->msgno);
-                        $randomNo = generateRandomNumber(10);
+                        $randomNo = generateRandomString(10);
                         $path = public_path(@$getResults["filePath"]);
                         preg_match_all("#\bhttps?://[^,\s()<>]+(?:\([\w\d]+\)|([^,[:punct:]\s]|/))#", $message,$match);
                         $meeting_links = @$match[0];
@@ -142,15 +141,8 @@ class MailSyncController extends Controller
                                 {
                                     if(!empty(@$organizer[1]))
                                     {
-                                        $organizerExist = User::where("email",@$organizer[1])->first();
-                                        if (empty($organizerExist)) 
-                                        {
-                                            $userInfo = $this->addUser(@$organizer[1]);
-                                            $user_id = $userInfo->id;
-                                        } else {
-                                            $user_id = $organizerExist->id;
-                                        }
-
+                                        $userInfo = addUser(@$organizer[1]);
+                                        $user_id = $userInfo->id;
                                     } else{
                                         $user_id = '1';
                                     }
@@ -160,7 +152,7 @@ class MailSyncController extends Controller
 
                                     $meeting = new Meeting();
                                     $meeting->message_id = @$overview->msgno;
-                                    $meeting->meetRandomId =  generateRandomNumber(14);
+                                    $meeting->meetRandomId =  generateRandomString(14);
                                     $meeting->meeting_ref_no =  $meeting_ref_no;
                                     $meeting->organised_by = $user_id;
                                     $meeting->meeting_title = @$event->summary;
@@ -321,64 +313,4 @@ class MailSyncController extends Controller
         ];
     }
 
-    private function addUser($email)
-    {
-        $randomNo = generateRandomNumber(10);
-        $password = Hash::make($randomNo);
-        $masterUser = new MasterUser();
-        $masterUser->name = $email;
-        $masterUser->email = $email;
-        $masterUser->password = $password;
-        $masterUser->save();
-
-        $user = new User();
-        $user->id = $masterUser->id;
-        $user->role_id = "2";
-        $user->name = $email;
-        $user->email = $email;
-        $user->password = $password;
-        $user->created_by = auth()->user()->id;
-        $user->save();
-
-        //Delete if entry exists
-        DB::table("password_resets")
-            ->where("email", $email)
-            ->delete();
-
-        $token = \Str::random(64);
-        DB::table("password_resets")->insert([
-            "email" => $email,
-            "token" => $token,
-            "created_at" => Carbon::now(),
-        ]);
-
-        $baseRedirURL = env("APP_URL");
-        $content = [
-            "name" => $user->name,
-            "email" => $user->email,
-            "password" => $randomNo,
-            "passowrd_link" =>
-                $baseRedirURL . "/authentication/reset-password/" . $token,
-        ];
-
-        if (env("IS_MAIL_ENABLE", false) == true) {
-            $recevier = Mail::to($email)->send(new WelcomeMail($content));
-        }
-
-        /*-------Assigne Meeting module for this user*/
-        $assigneModule = new AssigneModule();
-        $assigneModule->module_id = "1";
-        $assigneModule->user_id = $masterUser->id;
-        $assigneModule->save();
-
-        //Role and permission sync
-        $role = Role::where("id", "2")->first();
-        $permissions = $role->permissions->pluck("name");
-
-        $user->assignRole($role->name);
-        foreach ($permissions as $key => $permission) {
-            $user->givePermissionTo($permission);
-        }
-        return $user;
-    }
 }

@@ -47,7 +47,7 @@ class ActionItemControllerTest extends TestCase
         //create Meeting
         $rand = strtoupper(Str::random(2)).rand(10000000,99999999);
         $meeting = new Meeting;
-        $meeting->meetRandomId = generateRandomNumber(14);
+        $meeting->meetRandomId = generateRandomString(14);
         $meeting->meeting_title = $name;
         $meeting->meeting_ref_no = $rand;
         $meeting->agenda_of_meeting  = $name;

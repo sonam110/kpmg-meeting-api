@@ -7,9 +7,21 @@ use Illuminate\Database\Eloquent\Model;
 use App\Models\Attendee;
 use App\Models\User;
 use App\Models\MeetingDocument;
+use Spatie\Activitylog\Traits\LogsActivity;
+use Spatie\Activitylog\LogOptions;
+
 class Meeting extends Model
 {
-    use HasFactory;
+    use HasFactory, LogsActivity;
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly(['*'])
+            ->logOnlyDirty()
+            ->useLogName('Meeting')
+            ->setDescriptionForEvent(fn(string $eventName) => "Meeting has been {$eventName}");
+    }
 
     public function attendees()
     {

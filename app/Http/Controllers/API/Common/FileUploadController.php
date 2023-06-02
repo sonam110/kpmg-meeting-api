@@ -40,7 +40,7 @@ class FileUploadController extends Controller
         {
             $destinationPath = 'uploads/';
             $fileArray = array();
-            $formatCheck = ['doc','docx','png','jpeg','jpg','pdf','svg','mp4','tif','tiff','bmp','gif','eps','raw','jfif','webp','pem','csv'];
+            $formatCheck = ['doc','docx','png','jpeg','jpg','pdf','svg','mp4','webp','csv'];
 
             if($request->is_multiple==1)
             {
@@ -51,7 +51,7 @@ class FileUploadController extends Controller
                     $extension = strtolower($file->getClientOriginalExtension());
                     if(!in_array($extension, $formatCheck))
                     {
-                        return response()->json(prepareResult(true, [], trans('translate.file_not_allowed').'Only allowed : doc,docx,png,jpeg,jpg,pdf,svg,mp4,tif,tiff,bmp,gif,eps,raw,jfif,webp,pem,csv'), config('httpcodes.internal_server_error'));
+                        return response()->json(prepareResult(true, [], trans('translate.file_not_allowed').'Only allowed : doc, docx, png, jpeg, jpg, pdf, svg, mp4, gif, webp, csv'), config('httpcodes.internal_server_error'));
                     }
                     $fileName   = time() . '.' . $file->getClientOriginalExtension();
                     $filePath = 'uploads/' . $fileName;
@@ -75,7 +75,7 @@ class FileUploadController extends Controller
                 $file->storeAs('public/uploads',$fileName);
                 if(!in_array($extension, $formatCheck))
                 {
-                    return response()->json(prepareResult(true, [], trans('translate.file_not_allowed').'Only allowed : doc,docx,png,jpeg,jpg,pdf,svg,mp4,tif,tiff,bmp,gif,eps,raw,jfif,webp,pem,csv'), config('httpcodes.internal_server_error'));
+                    return response()->json(prepareResult(true, [], trans('translate.file_not_allowed').'Only allowed : doc, docx, png, jpeg, jpg, pdf, svg, mp4, gif, webp, csv'), config('httpcodes.internal_server_error'));
                 }
 
                 $fileInfo = [

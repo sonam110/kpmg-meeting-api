@@ -137,7 +137,7 @@ class ActionItemController extends Controller
             $actionItem->meeting_id = $request->meeting_id;
             $actionItem->note_id = $request->note_id;
             $actionItem->owner_id  = $request->owner_id;
-            $actionItem->mm_ref_id =  generateRandomNumber(14);
+            $actionItem->mm_ref_id =  generateRandomString(14);
             $actionItem->date_opened = $request->date_opened;
             $actionItem->task  = $request->task;
             $actionItem->priority  = $request->priority;

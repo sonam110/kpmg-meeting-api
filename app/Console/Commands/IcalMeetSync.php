@@ -11,7 +11,6 @@ use App\Models\MasterUser;
 use App\Models\Module;
 use App\Models\AssigneModule;
 use App\Models\Notification;
-use App\Models\MeetingLog;
 use voku\helper\HtmlDomParser;
 use Mail;
 use App\Mail\MeetingMail;
@@ -89,7 +88,7 @@ class IcalMeetSync extends Command
                     {
                         $creation_date = date('Y-m-d',strtotime($overview->date));
                         $getResults = $this->getmsg($mbox, $overview->msgno);
-                        $randomNo = generateRandomNumber(10);
+                        $randomNo = generateRandomString(10);
                         $path = public_path(@$getResults["filePath"]);
                         preg_match_all("#\bhttps?://[^,\s()<>]+(?:\([\w\d]+\)|([^,[:punct:]\s]|/))#", $message,$match);
                         $meeting_links = @$match[0];
@@ -181,7 +180,7 @@ class IcalMeetSync extends Command
 
                                     $meeting = new Meeting();
                                     $meeting->message_id = @$overview->msgno;
-                                    $meeting->meetRandomId =  generateRandomNumber(14);
+                                    $meeting->meetRandomId =  generateRandomString(14);
                                     $meeting->meeting_ref_no =  $meeting_ref_no;
                                     $meeting->organised_by = $user_id;
                                     $meeting->meeting_title = @$event->summary;
@@ -216,16 +215,9 @@ class IcalMeetSync extends Command
         {
             $attend = explode(":", @$attn);
             $attendee = @$attend[1];
-            $checkUser = User::where("email",$attendee)->first();
-            /*---------Add User---------------------*/
-            if (empty($checkUser)) {
-                $userInfo = addUser($attendee);
-                $user_id = $userInfo->id;
-                $name = $userInfo->name;
-            } else {
-                $user_id = $checkUser->id;
-                $name = $checkUser->name;
-            }
+            $userInfo = addUser($attendee);
+            $user_id = $userInfo->id;
+            $name = $userInfo->name;
            
             $attende = new Attendee();
             $attende->meeting_id = $meeting->id;

@@ -20,28 +20,32 @@ class UserSeeder extends Seeder
      */
     public function run()
     {
-        \DB::table(env('KPMG_MASTER_DB_DATABASE').'.modules')->delete();
-        $module1 = Module::create([
-            'id' => '1',
-            'name' => 'MEETING APP',
-            
-        ]);
-        $module2 = Module::create([
-            'id' => '2',
-            'name' => 'DPR MANAGEMENT',
-            
-        ]);
-        $module3 = Module::create([
-            'id' => '3',
-            'name' => 'CHECKLIST APP',
-            
-        ]);
+        $masterUser = MasterUser::first();
+        if(\DB::table(env('KPMG_MASTER_DB_DATABASE').'.modules')->count()<1)
+        {
+            \DB::table(env('KPMG_MASTER_DB_DATABASE').'.modules')->delete();
+            $module1 = Module::create([
+                'id' => '1',
+                'name' => 'MEETING APP',
+                
+            ]);
+            $module2 = Module::create([
+                'id' => '2',
+                'name' => 'DPR MANAGEMENT',
+                
+            ]);
+            $module3 = Module::create([
+                'id' => '3',
+                'name' => 'CHECKLIST APP',
+                
+            ]);
 
-        $masterUser = new MasterUser;
-        $masterUser->name = 'admin';
-        $masterUser->email  = 'admin@gmail.com';
-        $masterUser->password = \Hash::make(12345678);
-        $masterUser->save();
+            $masterUser = new MasterUser;
+            $masterUser->name = 'admin';
+            $masterUser->email  = 'admin@gmail.com';
+            $masterUser->password = \Hash::make(12345678);
+            $masterUser->save();
+        }
 
         $adminUser = new User();
         $adminUser->id                      = $masterUser->id;
@@ -50,6 +54,7 @@ class UserSeeder extends Seeder
         $adminUser->email                   = 'admin@gmail.com';
         $adminUser->password                = \Hash::make(12345678);
         $adminUser->save();
+        $admin = $adminUser;
 
         /*-------Assigne Meeting module for this user*/
         $assigneModule = new AssigneModule;
@@ -72,17 +77,63 @@ class UserSeeder extends Seeder
 
 
 
-        $adminPermissions = Permission::select('id','name')->whereIn('belongs_to',['1','3'])->get();
+        $adminPermissions = [
+            'action-items-add',
+            'action-items-browse',
+            'action-items-delete',
+            'action-items-edit',
+            'action-items-read',
+            'all-meeting-browse',
+            'dashboard-browse',
+            'logs-browse',
+            'meeting-add',
+            'meeting-browse',
+            'meeting-delete',
+            'meeting-edit',
+            'meeting-read',
+            'notes-add',
+            'notes-browse',
+            'notes-delete',
+            'notes-edit',
+            'notes-read',
+            'notifications-add',
+            'notifications-browse',
+            'notifications-delete',
+            'notifications-edit',
+            'notifications-read',
+            'role-add',
+            'role-browse',
+            'role-delete',
+            'role-edit',
+            'role-read',
+            'user-add',
+            'user-browse',
+            'user-delete',
+            'user-edit',
+            'user-read',
+        ];
         foreach ($adminPermissions as $key => $permission) {
-            $addedPermission = $permission->name;
-            $adminRole->givePermissionTo($addedPermission);
+            $adminRole->givePermissionTo($permission);
+            $admin->givePermissionTo($permission);
         }
 
 
-        $userPermissions = Permission::select('id','name')->whereIn('belongs_to',['2','3'])->get();
+        $userPermissions = [
+            'user-browse',
+            'meeting-browse',
+            'meeting-add',
+            'meeting-read',
+            'meeting-edit',
+            'notes-browse',
+            'notes-add',
+            'notes-read',
+            'action-items-browse',
+            'action-items-add',
+            'action-items-read',
+            'action-items-edit'
+        ];
         foreach ($userPermissions as $key => $permission) {
-            $addedPermission = $permission->name;
-            $userRole->givePermissionTo($addedPermission);
+            $userRole->givePermissionTo($permission);
         }
 
 

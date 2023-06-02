@@ -79,6 +79,7 @@ return [
     'selected_booking_restored' => 'Selected booking restored.',
     'invoice_successfully_updated' => 'Invoice status successfully update.',
     'sample_collection_time_must_be_less_the_report_date_and_time' => 'Sample collection time must be less the report date and time.',
+    'new_meeting_created_notification_title' => 'A New Meeting Note Has Been Created',
 
 
     "Dashboards" => "Dashboards",

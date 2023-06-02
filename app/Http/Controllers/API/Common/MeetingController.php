@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Meeting;
 use App\Models\MeetingDocument;
-use App\Models\MeetingLog;
 use App\Models\Attendee;
 use App\Models\MasterUser;
 use App\Models\Module;
@@ -57,13 +56,17 @@ class MeetingController extends Controller
                 }
             }
             $user = getUser();
-            $query = Meeting::select('meetings.*')->orderby('meetings.'.$column,$dir)
+            $query = Meeting::select('meetings.*')
+            ->orderby('meetings.'.$column,$dir)
             ->with('attendees.user:id,name,email','documents','organiser:id,name,email');
             if($user->role_id != '1'){
                 $attendees = Attendee::where('user_id',$user->id)
                 ->pluck('meeting_id')
                 ->toArray();
-                $query = $query->whereIn('meetings.id',$attendees);
+                $query->where(function($q) use ($attendees) {
+                    $q->whereIn('meetings.id',$attendees)
+                        ->orWhere('organised_by', auth()->id());
+                });
             }
         
             if(!empty($request->meeting_title))
@@ -106,6 +109,7 @@ class MeetingController extends Controller
             {
                 $query->whereDate('meetings.meeting_date', '<=', $request->end_date);
             }
+
             if(!empty($request->attendee_id))
             {
                 $query->join('attendees', function($join) use ($request) {
@@ -171,7 +175,7 @@ class MeetingController extends Controller
         try {
             $rand = strtoupper(Str::random(2)).rand(10000000,99999999);
             $meeting = new Meeting;
-            $meeting->meetRandomId = generateRandomNumber(14);
+            $meeting->meetRandomId = generateRandomString(14);
             $meeting->meeting_title = $request->meeting_title;
             $meeting->meeting_ref_no = $rand;
             $meeting->agenda_of_meeting  = $request->agenda_of_meeting;
@@ -186,17 +190,11 @@ class MeetingController extends Controller
             /*------------Attendees---------------------*/
             $attendees = $request->attendees;
             if(is_array(@$attendees) && count(@$attendees) >0 ){
-                foreach ($attendees as $key => $attendee) {
-                    $checkUser = User::where('email',$attendee['email'])->first();
-                    /*---------Add User---------------------*/
-                    if(empty($checkUser)){
-                        $userInfo = addUser($attendee['email']);
-                        $user_id = $userInfo->id;
-                        $name = $userInfo->name;
-                    } else{
-                        $user_id = $checkUser->id;
-                        $name = $checkUser->name;
-                    }
+                foreach ($attendees as $key => $attendee) 
+                {
+                    $userInfo = addUser($attendee['email']);
+                    $user_id = $userInfo->id;
+                    $name = $userInfo->name;
 
                     $attende = new Attendee;
                     $attende->meeting_id = $meeting->id;
@@ -322,14 +320,8 @@ class MeetingController extends Controller
              if(is_array(@$attendees) && count(@$attendees) >0 ){
                 $deleteOldAtt = Attendee::where('meeting_id',$meeting->id)->delete();
                 foreach ($attendees as $key => $attendee) {
-                    $checkUser = User::where('email',$attendee['email'])->first();
-                    /*---------Add User---------------------*/
-                    if(empty($checkUser)){
-                        $userInfo = addUser($attendee['email']);
-                        $user_id = $userInfo->id;
-                    } else{
-                        $user_id = $checkUser->id;
-                    }
+                    $userInfo = addUser($attendee['email']);
+                    $user_id = $userInfo->id;
                     $attende = new Attendee;
                     $attende->meeting_id = $meeting->id;
                     $attende->user_id = $user_id;

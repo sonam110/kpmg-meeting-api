@@ -146,7 +146,7 @@ class NotesController extends Controller
                 $notification->sender_id            = auth()->id();
                 $notification->type                 = 'note';
                 $notification->status_code          = 'success';
-                $notification->title                = 'A New Meeting Note Has Been Created';
+                $notification->title                = trans('translate.new_meeting_created_notification_title');
                 $notification->message              = 'A new note on meeting '.$meetingNote->meeting->meeting_title.' has been added. Please click here for the details.';
                 $notification->read_status          = false;
                 $notification->data_id              = $request->meeting_id;
@@ -258,7 +258,7 @@ class NotesController extends Controller
             $notification->sender_id            = auth()->id();
             $notification->type                 = 'note';
             $notification->status_code          = 'success';
-            $notification->title                = 'A New Meeting Note Has Been Created';
+            $notification->title                = trans('translate.new_meeting_created_notification_title');
             $notification->message              = 'A new note on meeting '.$meetingNote->meeting->meeting_title.' has been added. Please click here for the details.';
             $notification->read_status          = false;
             $notification->data_id              = $request->meeting_id;
