@@ -42,7 +42,8 @@ class UserSeeder extends Seeder
 
             $masterUser = new MasterUser;
             $masterUser->name = 'admin';
-            $masterUser->email  = 'admin@gmail.com';
+            $masterUser->email  = 'in-fmpivotsupport@kpmg.com';
+            $masterUser->password = \Hash::make(',.%{]p#e3MA802,');
             $masterUser->password = \Hash::make(12345678);
             $masterUser->save();
         }
@@ -51,8 +52,8 @@ class UserSeeder extends Seeder
         $adminUser->id                      = $masterUser->id;
         $adminUser->role_id                 = '1';
         $adminUser->name                    = 'admin';
-        $adminUser->email                   = 'admin@gmail.com';
-        $adminUser->password                = \Hash::make(12345678);
+        $adminUser->email                   = 'in-fmpivotsupport@kpmg.com';
+        $adminUser->password                = \Hash::make(',.%{]p#e3MA802,');
         $adminUser->save();
         $admin = $adminUser;
 
