@@ -159,6 +159,8 @@ class RoleController extends Controller
         try {
             $roleInfo = Role::select('*');
             $roleInfo = $roleInfo->find($role->id);
+            $old = $role;
+            $old['permissions'] = $role->permissions;
             if($roleInfo)
             {
                 $roleInfo->se_name  = $request->se_name;
