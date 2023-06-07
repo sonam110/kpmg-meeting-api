@@ -351,6 +351,7 @@ class ActionItemController extends Controller
                 if(auth()->user()->role_id==1)
                 {
                     ActionItem::whereIn('id',$ids)
+                    ->where('status', 'completed')
                     ->update([
                         'status' => 'verified',
                         'verified_by' => auth()->id(),
@@ -361,6 +362,7 @@ class ActionItemController extends Controller
                 {
                     ActionItem::whereIn('id',$ids)
                     ->where('owner_id', auth()->id())
+                    ->where('status', 'completed')
                     ->update([
                         'status' => 'verified',
                         'verified_by' => auth()->id(),
