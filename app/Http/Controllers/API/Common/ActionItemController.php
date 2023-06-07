@@ -346,6 +346,29 @@ class ActionItemController extends Controller
                 }
                 $message = trans('translate.percentage');
             }
+            elseif($action == 'verified')
+            {
+                if(auth()->user()->role_id==1)
+                {
+                    ActionItem::whereIn('id',$ids)
+                    ->update([
+                        'status' => 'verified',
+                        'verified_by' => auth()->id(),
+                        'verified_date' => date('Y-m-d'),
+                    ]);
+                }
+                else
+                {
+                    ActionItem::whereIn('id',$ids)
+                    ->where('owner_id', auth()->id())
+                    ->update([
+                        'status' => 'verified',
+                        'verified_by' => auth()->id(),
+                        'verified_date' => date('Y-m-d'),
+                    ]);
+                }
+                $message = trans('translate.verified');
+            }
             else
             {
                 return response()->json(prepareResult(true, [], 'Provide a valid Action'), config('httpcodes.success'));

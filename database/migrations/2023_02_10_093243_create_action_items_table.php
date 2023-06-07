@@ -26,8 +26,10 @@ return new class extends Migration
             $table->date('due_date')->nullable();
             $table->string('complete_percentage')->nullable();
             $table->string('image')->nullable();
-            $table->enum('status',['pending','in_progress','completed','on_hold','cancelled'])->default('pending');
+            $table->enum('status',['pending','in_progress','completed','on_hold','cancelled', 'verified'])->default('pending');
             $table->date('complete_date')->nullable();
+            $table->unsignedBigInteger('verified_by')->nullable();
+            $table->date('verified_date')->nullable();
             $table->text('comment')->nullable();
             $table->unsignedBigInteger('created_by');
             $table->foreign('created_by')->references('id')->on('users')->onDelete('cascade');

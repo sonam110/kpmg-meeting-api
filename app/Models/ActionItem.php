@@ -14,7 +14,7 @@ class ActionItem extends Model
 {
     use HasFactory, LogsActivity;
 
-    protected $fillable = ['status','complete_date','complete_percentage','meeting_id','note_id','owner_id','mm_ref_id','date_opened','task','priority','due_date','image','comment'];
+    protected $fillable = ['status','complete_date','complete_percentage','meeting_id','note_id','owner_id','mm_ref_id','date_opened','task','priority','due_date','image','comment', 'verified_by', 'verified_date'];
 
     public function getActivitylogOptions(): LogOptions
     {

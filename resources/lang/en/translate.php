@@ -36,6 +36,7 @@ return [
     'pending' => 'Status Pending Updated successfully.',
     'in_process' => 'Status In-Process Updated successfully.',
     'completed' => 'Status Completed Updated successfully.',
+    'verified' => 'Status is verified.',
     'on_hold' => 'Status On-Hold Updated successfully.',
     'cancelled' => 'Status Cancelled Updated successfully.',
     'record_not_found' => 'Record not found',
