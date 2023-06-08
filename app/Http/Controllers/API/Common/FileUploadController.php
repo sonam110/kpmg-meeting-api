@@ -53,6 +53,18 @@ class FileUploadController extends Controller
                     {
                         return response()->json(prepareResult(true, [], trans('translate.file_not_allowed').'Only allowed : doc, docx, png, jpeg, jpg, pdf, svg, mp4, gif, webp, csv'), config('httpcodes.internal_server_error'));
                     }
+
+                    //********************************
+                    //scan all files
+                    $finfo = finfo_open(FILEINFO_MIME_TYPE); // Return MIME type
+                    $fileActCheck = finfo_file($finfo, $file);
+                    finfo_close($finfo);
+                    if($fileActCheck=='application/x-dosexec')
+                    {
+                        return response()->json(prepareResult(true, [], trans('translate.file_not_allowed').'Blocked for security reasons! '), config('httpcodes.internal_server_error'));
+                    }
+                    //********************************
+
                     $fileName   = time() . '.' . $file->getClientOriginalExtension();
                     $filePath = 'uploads/' . $fileName;
                     $file->storeAs('public/uploads',$fileName);
@@ -77,6 +89,17 @@ class FileUploadController extends Controller
                 {
                     return response()->json(prepareResult(true, [], trans('translate.file_not_allowed').'Only allowed : doc, docx, png, jpeg, jpg, pdf, svg, mp4, gif, webp, csv'), config('httpcodes.internal_server_error'));
                 }
+
+                //********************************
+                //scan all files
+                $finfo = finfo_open(FILEINFO_MIME_TYPE); // Return MIME type
+                $fileActCheck = finfo_file($finfo, $file);
+                finfo_close($finfo);
+                if($fileActCheck=='application/x-dosexec')
+                {
+                    return response()->json(prepareResult(true, [], trans('translate.file_not_allowed').'Blocked for security reasons! '), config('httpcodes.internal_server_error'));
+                }
+                //********************************
 
                 $fileInfo = [
                     'file_name'         => url('api/file-access/'.$filePath),
