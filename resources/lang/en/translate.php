@@ -8,6 +8,7 @@ return [
     'no_records_found' => 'No records found.',
     'click_here_to_go_to_login' => 'Click here to go to Login Page.',
     'file_not_allowed' => 'File format not allowed.',
+    'malicious_file' => 'Malicious file.',
     'account_is_in_testing_environment_does_not_perform_this_operation' => 'Currently, your account is in a testing environment that does not perform this operation.',
     'request_successfully_submitted' => 'Request successfully submitted.',
     'invalid_request' => 'Invalid Request',

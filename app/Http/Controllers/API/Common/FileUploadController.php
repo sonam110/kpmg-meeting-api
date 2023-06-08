@@ -61,7 +61,7 @@ class FileUploadController extends Controller
                     finfo_close($finfo);
                     if($fileActCheck=='application/x-dosexec')
                     {
-                        return response()->json(prepareResult(true, [], trans('translate.file_not_allowed').'Blocked for security reasons! '), config('httpcodes.internal_server_error'));
+                        return response()->json(prepareResult(true, [], trans('translate.malicious_file').'Blocked for security reasons! '), config('httpcodes.internal_server_error'));
                     }
                     //********************************
 
@@ -94,7 +94,7 @@ class FileUploadController extends Controller
                 finfo_close($finfo);
                 if($fileActCheck=='application/x-dosexec')
                 {
-                    return response()->json(prepareResult(true, [], trans('translate.file_not_allowed').'Blocked for security reasons! '), config('httpcodes.internal_server_error'));
+                    return response()->json(prepareResult(true, [], trans('translate.malicious_file').'Blocked for security reasons! '), config('httpcodes.internal_server_error'));
                 }
                 //********************************
 
