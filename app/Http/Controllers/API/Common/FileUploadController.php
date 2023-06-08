@@ -82,9 +82,6 @@ class FileUploadController extends Controller
             {
                 $file      = $request->file('file');
                 $extension = $file->getClientOriginalExtension();
-                $fileName   = time() . '.' . $extension;
-                $filePath = 'uploads/' . $fileName;
-                $file->storeAs('public/uploads',$fileName);
                 if(!in_array($extension, $formatCheck))
                 {
                     return response()->json(prepareResult(true, [], trans('translate.file_not_allowed').'Only allowed : doc, docx, png, jpeg, jpg, pdf, svg, mp4, gif, webp, csv'), config('httpcodes.internal_server_error'));
@@ -101,6 +98,10 @@ class FileUploadController extends Controller
                 }
                 //********************************
 
+                $fileName   = time() . '.' . $extension;
+                $filePath = 'uploads/' . $fileName;
+                $file->storeAs('public/uploads',$fileName);
+                
                 $fileInfo = [
                     'file_name'         => url('api/file-access/'.$filePath),
                     'file_extension'    => $extension,
