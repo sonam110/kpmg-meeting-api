@@ -52,7 +52,7 @@ class AuthController extends Controller
             $checkOtpReq->save();
         }
 
-        if (RateLimiter::tooManyAttempts(request()->ip(), 5)) {
+        if (RateLimiter::tooManyAttempts(request()->ip(), env('LOGIN_ATTEMPT_LIMIT', 5))) {
 
             $seconds = RateLimiter::availableIn($this->throttleKey());
 
@@ -112,7 +112,7 @@ class AuthController extends Controller
                 {
                     $customLog->failure_reason = trans('translate.user_already_logged_in');
                     $customLog->save();
-                    RateLimiter::hit(request()->ip(), 900); //in seconds
+                    RateLimiter::hit(request()->ip(), env('LOCK_TIME_IN_SEC_INCORRECT_PWD_TIME', 3600)); //in seconds
                     return response()->json(prepareResult(true, ['is_logged_in'=> true], trans('translate.user_already_logged_in')), config('httpcodes.not_found'));
                 }
             }
@@ -120,7 +120,7 @@ class AuthController extends Controller
             if(in_array($user->status, [0,2])) {
                 $customLog->failure_reason = trans('translate.account_is_inactive');
                 $customLog->save();
-                RateLimiter::hit(request()->ip(), 900);
+                RateLimiter::hit(request()->ip(), env('LOCK_TIME_IN_SEC_INCORRECT_PWD_TIME', 3600));
                 return response()->json(prepareResult(true, [], trans('translate.account_is_inactive')), config('httpcodes.unauthorized'));
             }
 
@@ -166,7 +166,7 @@ class AuthController extends Controller
             } else {
                 $customLog->failure_reason = trans('translate.invalid_username_and_password');
                 $customLog->save();
-                RateLimiter::hit(request()->ip(), 900);
+                RateLimiter::hit(request()->ip(), env('LOCK_TIME_IN_SEC_INCORRECT_PWD_TIME', 3600));
                 return response()->json(prepareResult(true, [], trans('translate.invalid_username_and_password')),config('httpcodes.unauthorized'));
             }
         } catch (\Throwable $e) {
