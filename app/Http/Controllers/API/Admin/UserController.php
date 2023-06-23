@@ -284,6 +284,16 @@ class UserController extends Controller
             }
             else
             {
+                //check User email
+                $getUsers = User::select('email')->where('id', '!=', $id)->get();
+                foreach ($getUsers as $key => $existUser) 
+                {
+                    if($request->email==$existUser->email)
+                    {
+                        return response(prepareResult(true, trans('translate.user_already_exist_with_this_email'), trans('translate.user_already_exist_with_this_email')), config('httpcodes.internal_server_error'));
+                    }
+                }
+
                 $masterUser = MasterUser::find($id);
                 $masterUser->name = $request->name;
                 $masterUser->email  = $request->email;           

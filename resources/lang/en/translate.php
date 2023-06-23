@@ -1,5 +1,6 @@
 <?php
 return [
+    'user_already_exist_with_this_email' => 'User already exist with this email, Please try with another email.',
     'too_many_otp_attempts' => 'OTP entered in the last three attempts is wrong, Please wait 10 minutes then try again.',
     'too_many_otp_requests' => 'Too many OTP requests, Please wait 10 minutes then try again.',
     'otp_not_exist' => 'OTP not found with this user, Please regenrate.',
