@@ -121,8 +121,14 @@ return [
     | will not be safe. Please do this before deploying an application!
     |
     */
+  
+    'key' => env('APP_KEY'),
+    //'key' => 'base64:i2U2IKIKKXIkF6FV7e31lxpmLPpHvFk1oNueHh+EI7w=',
+    // currently we are using this key (base64:i2U2IKIKKXIkF6FV7e31lxpmLPpHvFk1oNueHh+EI7w=) for encryption
+    // do not changed this key once you deployed this project to the server
+    // This key is used to encrypt and decrypt data.
+    // If this key is changed then all previous stored data (encrypted data) cannot be recovered
 
-    'key' => 'base64:i2U2IKIKKXIkF6FV7e31lxpmLPpHvFk1oNueHh+EI7w=',  // do not changed this key
 
     'cipher' => 'AES-256-CBC',
 

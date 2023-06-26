@@ -142,6 +142,7 @@ class AuthController extends Controller
                 }
                 $otp->email = $email;
                 $otp->otp =  base64_encode($otpSend);
+                $otp->otp_expired =  date('Y-m-d H:i:s', strtotime("5 minutes", time()));
                 $otp->resent_count = $otp->resent_count + 1;
                 $otp->save();
                 if($otp->resent_count>=env('OTP_ATTEMPT_LIMIT', 3))

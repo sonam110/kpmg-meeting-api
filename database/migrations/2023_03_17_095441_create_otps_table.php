@@ -17,6 +17,7 @@ return new class extends Migration
             $table->id();
             $table->string('email');
             $table->string('otp')->comment('base64_encode format');
+            $table->timestamp('otp_expired')->comment('OTP expired')->nullable();
             $table->integer('resent_count');
             $table->timestamp('lock_till');
             $table->timestamps();
