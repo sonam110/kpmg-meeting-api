@@ -35,7 +35,7 @@ class ActionItemReminder extends Command
         $dayBeforeFiveDays = date("Y-m-d",strtotime('-5 days'));
 
         $allactionItems = ActionItem::whereDate('created_at','<=',$dayBeforeFiveDays)
-            ->where('status','!=','completed')
+            ->whereNotIn('status',['completed','verified'])
             ->get();
 
         foreach ($allactionItems as $value) 
